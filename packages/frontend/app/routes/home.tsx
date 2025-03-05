@@ -74,6 +74,8 @@ export default function Chat() {
 	const { messagesMap, addMessage, setMessages } = useMessagesStore();
 	const messages = messagesMap[initialConversationId] || [];
 
+	const [isComposing, setIsComposing] = useState(false);
+
 	function addUploadingFile(file: string) {
 		setUploadingFiles((prev: string[]) => [...prev, file]);
 	}
@@ -515,8 +517,10 @@ export default function Chat() {
 								resize="none"
 								border="none"
 								focusRingWidth={0}
+								onCompositionStart={() => setIsComposing(true)}
+								onCompositionEnd={() => setIsComposing(false)}
 								onKeyDown={(e) => {
-									if (e.key === "Enter" && !e.shiftKey) {
+									if (e.key === "Enter" && !e.shiftKey && !isComposing) {
 										e.preventDefault();
 										if (!isSubmitDisabled) {
 											onSubmit({
