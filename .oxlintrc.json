@@ -1,0 +1,50 @@
+{
+	"$schema": "./node_modules/oxlint/configuration_schema.json",
+	"plugins": ["typescript", "unicorn", "oxc", "react", "jsx-a11y", "import"],
+	"categories": {
+		"correctness": "error"
+	},
+	"rules": {
+		// The automatic JSX runtime needs no React in scope.
+		"react/react-in-jsx-scope": "off",
+		"react/rules-of-hooks": "error",
+		"react/exhaustive-deps": "error",
+		// React Compiler's rules. The app is not compiled by it, and keeps
+		// callbacks' latest values in refs written during render on purpose.
+		"react/refs": "off",
+		"react/set-state-in-effect": "off",
+		"react/immutability": "off",
+		// Roles sit on Astryx components, which choose the element they render.
+		"jsx-a11y/prefer-tag-over-role": "off",
+		// Only dialogs autofocus, on their first field, as the WAI-ARIA dialog
+		// pattern asks.
+		"jsx-a11y/no-autofocus": "off",
+		// A destructured rest drops a field by naming it: `{ execute: _, ...spec }`.
+		"no-unused-vars": [
+			"error",
+			{ "ignoreRestSiblings": true, "argsIgnorePattern": "^_" }
+		],
+		// Styling goes through Astryx props and the theme, never StyleX (apps/web/AGENTS.md).
+		"no-restricted-imports": [
+			"error",
+			{
+				"patterns": [
+					{
+						"group": ["@stylexjs/*", "**/*.stylex", "**/*.stylex.js"],
+						"message": "StyleX is not used in Heveta's code: style through Astryx props and the theme (packages/brand/src/theme/heveta.ts). See apps/web/AGENTS.md."
+					}
+				]
+			}
+		]
+	},
+	"ignorePatterns": [
+		"**/gen/**",
+		"**/.wrangler/**",
+		"**/build/**",
+		"**/worker-configuration.d.ts",
+		"**/.react-router/**",
+		"packages/brand/src/theme/heveta.js",
+		"packages/brand/src/theme/heveta.d.ts",
+		"packages/brand/src/theme/heveta.variants.d.ts"
+	]
+}

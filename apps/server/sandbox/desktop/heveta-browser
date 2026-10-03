@@ -1,0 +1,39 @@
+#!/bin/bash
+# The computer's web browser (docs/sandbox.md): one Google Chrome on the screen,
+# shared by the person and the agent. The agent drives it over the DevTools
+# protocol on 127.0.0.1:9222 (Playwright's connect_over_cdp), so its tabs,
+# pages, and logins stay between commands and the person watches one window.
+# Started once; run again, it opens the given URLs in the running browser.
+# Everything in the container runs as root, where Chrome only starts without
+# its own sandbox; the container is the boundary.
+set -euo pipefail
+chrome=/opt/google/chrome/chrome
+profile=/root/.config/heveta-browser
+endpoint=http://127.0.0.1:9222/json/version
+
+if curl -sf "$endpoint" >/dev/null; then
+  # The same profile hands the URLs to the running browser.
+  if [ $# -gt 0 ]; then exec "$chrome" --no-sandbox --user-data-dir="$profile" "$@"; fi
+  exit 0
+fi
+# The browser shows on the screen, which a new computer starts alongside its
+# first commands rather than before them: make sure it is up.
+heveta-screen
+# Playwright's own switches for a browser it drives: no first-run screens, no
+# "automated testing" bar, and shared memory in /tmp rather than /dev/shm,
+# which Cloudflare's containers lack (the browser stopped at start there) and
+# a container keeps small. `--test-type`, as ChromeDriver passes it, keeps
+# Chrome from warning in a bar above every page that it runs without its
+# sandbox. The window class is fixed (Chrome's own names the profile folder),
+# so the dock knows the window as its browser launcher's (StartupWMClass).
+setsid -f "$chrome" --no-sandbox --user-data-dir="$profile" \
+  --remote-debugging-port=9222 --no-first-run --no-default-browser-check \
+  --disable-infobars --disable-search-engine-choice-screen \
+  --disable-dev-shm-usage --test-type --class=heveta-browser \
+  "${@:-about:blank}" >/tmp/browser.log 2>&1 </dev/null
+for _ in $(seq 100); do
+  if curl -sf "$endpoint" >/dev/null; then exit 0; fi
+  sleep 0.1
+done
+echo "The browser did not start" >&2
+exit 1

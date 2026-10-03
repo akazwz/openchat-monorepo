@@ -1,0 +1,95 @@
+syntax = "proto3";
+package heveta.v1;
+
+import "heveta/v1/file.proto";
+import "google/protobuf/timestamp.proto";
+
+// The agent's own mailbox (docs/email.md): the agent receives and sends mail
+// through its tools; people read it here. Mail arriving starts nothing.
+service MailService {
+  // The signed-in user's mailbox, given its address on first use.
+  rpc GetMailbox(GetMailboxRequest) returns (GetMailboxResponse);
+  // One folder, newest first.
+  rpc ListEmails(ListEmailsRequest) returns (ListEmailsResponse);
+  rpc GetEmail(GetEmailRequest) returns (GetEmailResponse);
+  // Marks a received email read; one read already stays as it was.
+  rpc MarkEmailRead(MarkEmailReadRequest) returns (MarkEmailReadResponse);
+  // Only received mail: what was sent is the record of what the agent did in
+  // the user's name, and what its sending limit counts (FAILED_PRECONDITION).
+  rpc DeleteEmail(DeleteEmailRequest) returns (DeleteEmailResponse);
+}
+message Mailbox {
+  string address = 1;
+  // Recipients the agent may send to in any 24 hours, and how many it sent
+  // to in the last 24.
+  uint32 recipient_limit = 2;
+  uint32 recipients_used = 3;
+  // Received emails nobody (the user or the agent) has read yet.
+  uint32 unread_count = 4;
+}
+enum EmailFolder {
+  EMAIL_FOLDER_UNSPECIFIED = 0;
+  EMAIL_FOLDER_INBOX = 1;
+  EMAIL_FOLDER_SENT = 2;
+}
+message EmailAddress {
+  string address = 1;
+  // The display name; empty when there is none.
+  string name = 2;
+}
+message Email {
+  string id = 1;
+  EmailFolder folder = 2;
+  EmailAddress from = 3;
+  repeated EmailAddress to = 4;
+  repeated EmailAddress cc = 5;
+  // Sent mail only.
+  repeated EmailAddress bcc = 6;
+  // Where the sender asks replies to go, when not to itself.
+  repeated EmailAddress reply_to = 7;
+  string subject = 8;
+  // When it arrived, or was handed over to be sent.
+  google.protobuf.Timestamp time = 9;
+  // Sent mail whose sending was never confirmed: it may or may not have gone
+  // out.
+  bool unconfirmed = 10;
+  uint32 attachment_count = 11;
+  // The start of its text, in lists; empty in GetEmail.
+  string snippet = 12;
+  // The whole text, in GetEmail only.
+  string text = 13;
+  // In GetEmail only.
+  repeated File attachments = 14;
+  // Received mail nobody has read yet.
+  bool unread = 15;
+  // Received mail whose From address Cloudflare's mail server verified
+  // (DMARC passed); any other From address may be forged.
+  bool sender_verified = 16;
+}
+message GetMailboxRequest {}
+message GetMailboxResponse {
+  Mailbox mailbox = 1;
+}
+message ListEmailsRequest {
+  EmailFolder folder = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+message ListEmailsResponse {
+  repeated Email emails = 1;
+  string next_page_token = 2;
+}
+message GetEmailRequest {
+  string email_id = 1;
+}
+message GetEmailResponse {
+  Email email = 1;
+}
+message MarkEmailReadRequest {
+  string email_id = 1;
+}
+message MarkEmailReadResponse {}
+message DeleteEmailRequest {
+  string email_id = 1;
+}
+message DeleteEmailResponse {}

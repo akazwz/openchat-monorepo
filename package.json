@@ -1,24 +1,45 @@
 {
-	"name": "openchat",
+	"name": "heveta",
 	"private": true,
 	"scripts": {
-		"dev:frontend": "pnpm --filter frontend dev",
-		"dev:workers": "pnpm --filter workers dev",
-		"dev": "pnpm --filter workers dev & pnpm --filter frontend dev",
-		"gen": "rm -rf packages/frontend/app/gen packages/workers/src/gen && buf generate",
-		"format:frontend": "biome format --write packages/frontend",
-		"format:workers": "biome format --write packages/workers",
-		"format": "biome format --write .",
-		"build:frontend": "pnpm --filter frontend build",
-		"fly": "pnpm --filter frontend build && pnpm --filter workers run deploy"
+		"dev:electron": "pnpm --filter @heveta/electron dev",
+		"build:electron": "pnpm --filter @heveta/electron build",
+		"package:electron": "pnpm --filter @heveta/electron package:macos",
+		"install:electron": "pnpm --filter @heveta/electron install:macos",
+		"dev:web": "pnpm --filter @heveta/web dev",
+		"dev:site": "pnpm --filter @heveta/site dev",
+		"dev:prepare": "pnpm build:web && pnpm db:setup",
+		"dev:server": "pnpm dev:prepare && pnpm --filter @heveta/server dev",
+		"dev": "pnpm dev:prepare && pnpm --parallel --filter @heveta/web --filter @heveta/server dev",
+		"db:up": "docker compose up -d --wait --wait-timeout 60 postgres",
+		"db:down": "docker compose stop postgres",
+		"db:setup": "pnpm db:up && pnpm --filter @heveta/server exec drizzle-kit migrate --config drizzle.local.config.ts",
+		"gen": "rm -rf apps/web/app/gen apps/server/src/gen && buf generate",
+		"theme": "pnpm --filter @heveta/brand theme",
+		"format:web": "oxfmt apps/web",
+		"format:server": "oxfmt apps/server",
+		"format": "oxfmt",
+		"build:web": "pnpm --filter @heveta/web build",
+		"build:site": "pnpm --filter @heveta/site build",
+		"build": "pnpm build:web && pnpm --filter @heveta/server exec cf deploy --dry-run",
+		"deploy": "pnpm build:web && pnpm --filter @heveta/server run deploy",
+		"invite": "pnpm --filter @heveta/server run invite",
+		"deploy:site": "pnpm --filter @heveta/site run deploy",
+		"typecheck": "pnpm --filter @heveta/brand typecheck && pnpm --filter @heveta/web typecheck && pnpm --filter @heveta/site typecheck && pnpm --filter @heveta/server typecheck && pnpm --filter @heveta/electron typecheck",
+		"test": "pnpm --filter @heveta/web test && pnpm --filter @heveta/server test",
+		"test:integration": "bash scripts/test-integration.sh",
+		"lint": "oxlint --deny-warnings",
+		"check": "pnpm lint && oxfmt --check && pnpm --filter @heveta/brand theme:check"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.9.4",
-		"@bufbuild/protoc-gen-es": "^2.2.3",
-		"typescript": "^5.7.3"
+		"@bufbuild/protoc-gen-es": "^2.15.0",
+		"oxfmt": "0.70.0",
+		"oxlint": "1.85.0",
+		"typescript": "^7.0.2"
 	},
-	"dependencies": {
-		"@bufbuild/protobuf": "^2.2.3",
-		"@connectrpc/connect": "^2.0.2"
-	}
+	"engines": {
+		"node": ">=24.0.0",
+		"pnpm": ">=12.5.1"
+	},
+	"packageManager": "pnpm@12.5.1"
 }

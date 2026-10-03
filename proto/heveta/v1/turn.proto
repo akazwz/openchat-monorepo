@@ -1,0 +1,57 @@
+syntax = "proto3";
+package heveta.v1;
+
+import "heveta/v1/model.proto";
+import "heveta/v1/run.proto";
+import "heveta/v1/thread.proto";
+
+// A turn is one immutable user input and the execution attempts (runs) made
+// to answer it; the latest attempt is the one shown.
+service TurnService {
+  // Accepts one user input and its first execution attempt atomically. With an
+  // empty thread_id it also starts a new conversation in the same transaction.
+  rpc StartTurn(StartTurnRequest) returns (StartTurnResponse);
+  // Creates another attempt for the latest turn; never replaces its user input.
+  rpc RetryTurn(RetryTurnRequest) returns (RetryTurnResponse);
+}
+message UserInput {
+  string text = 1;
+  repeated string file_ids = 2;
+}
+message StartTurnRequest {
+  // An existing thread, or empty to start a new conversation. A new thread is
+  // titled from the input text (its first 40 characters after trimming, or
+  // "未命名对话" when the input has no text) until the first reply generates a
+  // title, and is created in the same transaction as the turn. Replaying the
+  // same request_id and payload returns the same thread and run instead of
+  // creating another.
+  string thread_id = 1;
+  // Idempotency key; reusing it with a different payload is rejected.
+  string request_id = 2;
+  UserInput input = 3;
+  // A model from ModelService.ListModels; empty uses the default model.
+  string model_id = 4;
+  // One of the model's reasoning_efforts; unspecified uses its default.
+  ReasoningEffort reasoning_effort = 5;
+  // Empty uses the cloud computer. Retries retain the previous run’s target.
+  string device_id = 6;
+}
+message StartTurnResponse {
+  RunSnapshot snapshot = 1;
+  // The conversation this turn started, when thread_id was empty.
+  Thread thread = 2;
+}
+message RetryTurnRequest {
+  string turn_id = 1;
+  // The attempt being retried: the latest one of the thread's latest turn.
+  string previous_run_id = 2;
+  string request_id = 3;
+  // A model from ModelService.ListModels; empty keeps the previous attempt's model.
+  string model_id = 4;
+  // One of the model's reasoning_efforts; unspecified keeps the previous
+  // attempt's when the model accepts it, else uses the model's default.
+  ReasoningEffort reasoning_effort = 5;
+}
+message RetryTurnResponse {
+  RunSnapshot snapshot = 1;
+}

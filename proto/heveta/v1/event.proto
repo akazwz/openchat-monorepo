@@ -1,0 +1,55 @@
+syntax = "proto3";
+package heveta.v1;
+
+import "heveta/v1/auth.proto";
+import "heveta/v1/run.proto";
+import "heveta/v1/thread.proto";
+import "google/protobuf/timestamp.proto";
+
+// RPCs read full state and carry every command; changes reach a user's
+// devices on one event channel, a WebSocket at /events (with the session
+// cookie) whose binary frames are UserEvent messages. See docs/sync.md.
+
+// Memory entries were added, changed, or removed; read them again.
+message MemoryChanged {}
+
+// The user's computer's workspace or its snapshots changed (a save after a
+// change, a snapshot restored); read them again.
+message ComputerChanged {}
+
+// Mail arrived, was sent, or was deleted; read the mailbox again.
+message MailChanged {}
+
+// Native execution devices were registered, revoked, or changed availability.
+message DevicesChanged {}
+
+// A run began in a conversation (a new turn, or another attempt at one): it
+// moves up to its new time, and a reply is being written in it (Thread.running,
+// as of that time). Only this is carried, not its record, which may be older
+// than one already shown (a rename); a device without the conversation reads
+// it.
+message ThreadActivity {
+  string thread_id = 1;
+  google.protobuf.Timestamp active_time = 2;
+}
+
+// One change, pushed to every device of its user after it commits.
+message UserEvent {
+  oneof event {
+    // A run's committed progress: a snapshot, or one change at the next
+    // revision. A missing revision is repaired with GetRun.
+    RunEvent run = 1;
+    // A conversation was created or changed; the complete record.
+    Thread thread = 2;
+    // The ID of a permanently deleted conversation. IDs are never reused;
+    // this dominates every record/activity event for the same ID.
+    string thread_deleted = 3;
+    MemoryChanged memory = 4;
+    // The signed-in user's profile changed.
+    User user = 5;
+    ComputerChanged computer = 6;
+    ThreadActivity thread_activity = 7;
+    MailChanged mail = 8;
+    DevicesChanged devices = 9;
+  }
+}

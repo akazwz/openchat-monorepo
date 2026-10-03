@@ -1,0 +1,48 @@
+syntax = "proto3";
+package heveta.v1;
+
+service ModelService {
+  // The models a user can pick. The server owns this catalog; clients never
+  // name a model outside it.
+  rpc ListModels(ListModelsRequest) returns (ListModelsResponse);
+}
+message Model {
+  // Provider model id, e.g. "openai/gpt-5.6-luna".
+  string id = 1;
+  string display_name = 2;
+  // A short functional hint shown with the option, e.g. "更快".
+  string description = 3;
+  // The kinds of attached files the model reads itself. An image it does not
+  // read cannot be sent to it; a PDF it does not read is a file on the
+  // computer, which it opens with its tools.
+  repeated FileKind reads = 8;
+  // The reasoning efforts this model accepts, lowest first. Empty when its
+  // reasoning cannot be adjusted.
+  repeated ReasoningEffort reasoning_efforts = 5;
+  // Used when a request does not choose one; unspecified when the list is empty.
+  ReasoningEffort default_reasoning_effort = 6;
+  reserved 4, 7;
+}
+// A kind of file a model can read itself (Model.reads).
+enum FileKind {
+  FILE_KIND_UNSPECIFIED = 0;
+  FILE_KIND_IMAGE = 1;
+  FILE_KIND_PDF = 2;
+}
+// How much the model reasons before answering. Each model accepts its own
+// subset (Model.reasoning_efforts).
+enum ReasoningEffort {
+  REASONING_EFFORT_UNSPECIFIED = 0;
+  REASONING_EFFORT_NONE = 1;
+  REASONING_EFFORT_LOW = 2;
+  REASONING_EFFORT_MEDIUM = 3;
+  REASONING_EFFORT_HIGH = 4;
+  REASONING_EFFORT_XHIGH = 5;
+  REASONING_EFFORT_MAX = 6;
+}
+message ListModelsRequest {}
+message ListModelsResponse {
+  repeated Model models = 1;
+  // Used when a request does not name a model.
+  string default_model_id = 2;
+}

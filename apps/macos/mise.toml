@@ -1,0 +1,147 @@
+[settings.task]
+run_auto_install = false
+
+[tasks.build]
+description = "Build the macOS app (Debug by default)"
+usage = '''
+flag "-c --configuration <configuration>" default="Debug" {
+  choices "Debug" "Release"
+}
+flag "--identity <identity>" default="-"
+'''
+run = '''
+if [ "${usage_configuration?}" = "Debug" ]; then
+  build_destination="platform=macOS,arch=$(uname -m)"
+else
+  build_destination="generic/platform=macOS"
+fi
+native_signing_flags=""
+if [ "${usage_identity?}" != "-" ]; then
+  native_signing_flags="--timestamp"
+fi
+
+xcodebuild -project Heveta.xcodeproj \
+  -scheme Heveta \
+  -configuration "${usage_configuration?}" \
+  CODE_SIGN_IDENTITY="${usage_identity?}" \
+  HEVETA_SIGNING_FLAGS="$native_signing_flags" \
+  -destination "$build_destination" \
+  -packageAuthorizationProvider netrc \
+  -clonedSourcePackagesDirPath .build/packages \
+  -derivedDataPath .build/app build
+'''
+
+[tasks.dev]
+description = "Build and open the Debug app"
+depends = ["build"]
+run = 'open --env "HEVETA_APP_URL=${HEVETA_APP_URL:-https://app.heveta.com}" .build/app/Build/Products/Debug/Heveta.app'
+
+[tasks.release]
+description = "Build the universal Release app"
+depends = [{ task = "build", args = ["--configuration", "Release"] }]
+
+[tasks.distribute]
+description = "Build and package a Developer ID signed universal app"
+shell = "bash -c"
+run = '''
+set -euo pipefail
+native_signing_identity="${HEVETA_SIGNING_IDENTITY:?Set HEVETA_SIGNING_IDENTITY to a Developer ID Application identity}"
+mise run build --configuration Release --identity "$native_signing_identity"
+native_app=".build/app/Build/Products/Release/Heveta.app"
+codesign --verify --deep --strict "$native_app"
+codesign --display --verbose=4 "$native_app" 2> .build/signing.txt
+codesign --display --verbose=4 "$native_app/Contents/Frameworks/WebRTC.framework" 2> .build/framework-signing.txt
+if ! rg -q '^Authority=Developer ID Application:' .build/signing.txt || ! rg -q 'flags=.*runtime' .build/signing.txt || ! rg -q '^Timestamp=' .build/signing.txt || ! rg -q '^Timestamp=' .build/framework-signing.txt; then
+  echo "Distribution requires Developer ID Application signing, Hardened Runtime and trusted timestamps." >&2
+  exit 1
+fi
+ditto -c -k --sequesterRsrc --keepParent "$native_app" .build/Heveta-macOS-DeveloperID.zip
+echo "Signed archive: .build/Heveta-macOS-DeveloperID.zip"
+'''
+
+[tasks.notarize]
+description = "Notarize and staple an existing signed distribution build"
+shell = "bash -c"
+run = '''
+set -euo pipefail
+native_notary_profile="${HEVETA_NOTARY_PROFILE:?Set HEVETA_NOTARY_PROFILE to an existing notarytool Keychain profile}"
+native_app=".build/app/Build/Products/Release/Heveta.app"
+native_archive=".build/Heveta-macOS-DeveloperID.zip"
+codesign --verify --deep --strict "$native_app"
+codesign --display --verbose=4 "$native_app" 2> .build/signing.txt
+if ! rg -q '^Authority=Developer ID Application:' .build/signing.txt || ! rg -q 'flags=.*runtime' .build/signing.txt || ! rg -q '^Timestamp=' .build/signing.txt; then
+  echo "Run distribute first; notarization requires a Developer ID signed build." >&2
+  exit 1
+fi
+# Package the checked app immediately before submission, so the archive and
+# the app later stapled always come from the same distribution build.
+ditto -c -k --sequesterRsrc --keepParent "$native_app" "$native_archive"
+xcrun notarytool submit "$native_archive" --keychain-profile "$native_notary_profile" --wait --timeout 20m --output-format json > .build/notarization.json
+python3 -c 'import json; result=json.load(open(".build/notarization.json")); assert result.get("status") == "Accepted", "Notarization was not accepted; inspect .build/notarization.json"'
+xcrun stapler staple "$native_app"
+xcrun stapler validate "$native_app"
+spctl --assess --type execute "$native_app"
+ditto -c -k --sequesterRsrc --keepParent "$native_app" "$native_archive"
+echo "Notarized archive: $native_archive"
+'''
+
+[tasks.icon]
+description = "Generate all app icon sizes from a square PNG"
+shell = "bash -c"
+usage = '''
+flag "--source <path>" default="Resources/Assets.xcassets/AppIcon.appiconset/icon_1024.png"
+'''
+run = '''
+set -euo pipefail
+icon_source="${usage_source?}"
+icon_dir="Resources/Assets.xcassets/AppIcon.appiconset"
+
+if [[ ! -f "$icon_source" ]]; then
+  echo "Icon source does not exist: $icon_source" >&2
+  exit 1
+fi
+
+icon_properties="$(sips -g format -g pixelWidth -g pixelHeight -g hasAlpha "$icon_source")"
+if ! icon_width="$(printf '%s\n' "$icon_properties" | awk '
+  $1 == "format:" { format = $2 }
+  $1 == "pixelWidth:" { width = $2 }
+  $1 == "pixelHeight:" { height = $2 }
+  $1 == "hasAlpha:" { alpha = $2 }
+  END {
+    if (format == "png" && width == height && width >= 1024 && alpha == "yes")
+      print width
+    else
+      exit 1
+  }
+')"; then
+  echo "Icon source must be a square PNG, at least 1024 x 1024, with an alpha channel." >&2
+  exit 1
+fi
+
+icon_temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/heveta-icon.XXXXXX")"
+trap 'rm -rf "$icon_temp_dir"' EXIT
+
+# Normalize the master first so later exports produce the same smaller images.
+if [[ "$icon_width" == "1024" ]]; then
+  cp "$icon_source" "$icon_temp_dir/icon_1024.png"
+else
+  sips -z 1024 1024 "$icon_source" --out "$icon_temp_dir/icon_1024.png" > /dev/null
+fi
+for icon_size in 16 32 64 128 256 512; do
+  sips -z "$icon_size" "$icon_size" "$icon_temp_dir/icon_1024.png" \
+    --out "$icon_temp_dir/icon_$icon_size.png" > /dev/null
+done
+
+# Replace the assets only after every output has been generated successfully.
+mv "$icon_temp_dir"/icon_*.png "$icon_dir/"
+echo "Updated AppIcon: 16, 32, 64, 128, 256, 512, and 1024 pixels."
+'''
+
+[tasks.test]
+description = "Run native execution and protocol tests"
+run = """
+xcodebuild -project Heveta.xcodeproj -scheme Heveta -configuration Debug \
+  -destination "platform=macOS,arch=$(uname -m)" \
+  -packageAuthorizationProvider netrc -clonedSourcePackagesDirPath .build/packages \
+  -derivedDataPath .build/app test
+"""

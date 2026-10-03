@@ -1,0 +1,29 @@
+syntax = "proto3";
+package heveta.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// The agent's long-term memory about the signed-in user. The agent writes it
+// through its memory tools; people view and delete it here.
+service MemoryService {
+  // Every memory, most recently updated first.
+  rpc ListMemories(ListMemoriesRequest) returns (ListMemoriesResponse);
+  rpc DeleteMemory(DeleteMemoryRequest) returns (DeleteMemoryResponse);
+  rpc DeleteAllMemories(DeleteAllMemoriesRequest) returns (DeleteAllMemoriesResponse);
+}
+message Memory {
+  string id = 1;
+  string content = 2;
+  google.protobuf.Timestamp create_time = 3;
+  google.protobuf.Timestamp update_time = 4;
+}
+message ListMemoriesRequest {}
+message ListMemoriesResponse {
+  repeated Memory memories = 1;
+}
+message DeleteMemoryRequest {
+  string memory_id = 1;
+}
+message DeleteMemoryResponse {}
+message DeleteAllMemoriesRequest {}
+message DeleteAllMemoriesResponse {}

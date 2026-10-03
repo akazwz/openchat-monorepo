@@ -1,0 +1,27 @@
+syntax = "proto3";
+package heveta.v1;
+
+
+// Files are uploaded with POST /upload (the request body is the file, too
+// large for an RPC message); these RPCs read and delete them.
+service FileService {
+  rpc DeleteFile(DeleteFileRequest) returns (DeleteFileResponse);
+}
+message File {
+  string id = 1;
+  string url = 2;
+  string mime_type = 3;
+  string file_name = 4;
+  int64 size = 5;
+  // Where an attachment was put on the user's computer, once its message was
+  // sent; empty otherwise.
+  string workspace_path = 8;
+  // An image's size as shown (EXIF rotation applied), so it is laid out
+  // before it loads; 0 when unknown or not an image.
+  uint32 width = 9;
+  uint32 height = 10;
+}
+message DeleteFileRequest {
+  string file_id = 1;
+}
+message DeleteFileResponse {}

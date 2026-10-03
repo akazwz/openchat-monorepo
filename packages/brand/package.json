@@ -1,0 +1,31 @@
+{
+	"name": "@heveta/brand",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.tsx",
+		"./theme": {
+			"types": "./src/theme/heveta.d.ts",
+			"default": "./src/theme/heveta.js"
+		},
+		"./theme.css": "./src/theme/heveta.css"
+	},
+	"scripts": {
+		"theme": "astryx theme build src/theme/heveta.ts",
+		"theme:check": "astryx theme build --check src/theme/heveta.ts",
+		"typecheck": "tsc"
+	},
+	"dependencies": {
+		"@astryxdesign/theme-neutral": "^0.6.2"
+	},
+	"devDependencies": {
+		"@astryxdesign/cli": "^0.6.2",
+		"@astryxdesign/core": "^0.6.2",
+		"@types/react": "^19.3.0",
+		"react": "^19.3.0"
+	},
+	"peerDependencies": {
+		"@astryxdesign/core": "^0.6.2",
+		"react": "^19.3.0"
+	}
+}

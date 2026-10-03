@@ -1,0 +1,65 @@
+!! The computer's window frames (docs/sandbox.md): flat and dark, in the
+!! dock's colours (plank/dock.theme). Openbox draws its built-in button shapes.
+
+border.width: 1
+padding.width: 6
+padding.height: 4
+window.handle.width: 0
+window.client.padding.width: 0
+window.client.padding.height: 0
+menu.overlap: 0
+
+!! Titlebar
+window.active.title.bg: flat solid
+window.active.title.bg.color: #2b2d31
+window.inactive.title.bg: flat solid
+window.inactive.title.bg.color: #202124
+window.active.title.separator.color: #2b2d31
+window.inactive.title.separator.color: #202124
+window.active.border.color: #3c4043
+window.inactive.border.color: #2b2d31
+window.active.client.color: #2b2d31
+window.inactive.client.color: #202124
+
+!! Titlebar text
+window.label.text.justify: center
+window.active.label.bg: parentrelative
+window.active.label.text.color: #e8eaed
+window.inactive.label.bg: parentrelative
+window.inactive.label.text.color: #9aa0a6
+
+!! Window buttons
+window.*.button.*.bg: parentrelative
+window.active.button.*.image.color: #e8eaed
+window.inactive.button.*.image.color: #9aa0a6
+window.active.button.disabled.image.color: #5f6368
+window.inactive.button.disabled.image.color: #5f6368
+window.active.button.*.hover.bg: flat solid
+window.active.button.*.hover.bg.color: #3c4043
+window.active.button.*.pressed.bg: flat solid
+window.active.button.*.pressed.bg.color: #5f6368
+window.active.button.*.pressed.image.color: #ffffff
+window.inactive.button.*.hover.bg: parentrelative
+window.inactive.button.*.pressed.bg: parentrelative
+
+!! Menus (the desktop's right-click menu)
+menu.border.color: #3c4043
+menu.items.bg: flat solid
+menu.items.bg.color: #2b2d31
+menu.items.text.color: #e8eaed
+menu.items.disabled.text.color: #5f6368
+menu.items.justify: left
+menu.items.active.bg: flat solid
+menu.items.active.bg.color: #3c4043
+menu.items.active.text.color: #ffffff
+menu.title.bg: flat solid
+menu.title.bg.color: #202124
+menu.title.text.color: #e8eaed
+menu.title.text.justify: center
+menu.separator.color: #3c4043
+
+!! On-screen displays
+osd.bg: flat solid
+osd.bg.color: #2b2d31
+osd.border.color: #3c4043
+osd.label.text.color: #e8eaed

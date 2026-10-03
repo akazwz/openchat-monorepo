@@ -1,0 +1,35 @@
+# The dock's look (docs/sandbox.md): a rounded plate around its icons, in the
+# window frames' dark grey (themerc), a little translucent over the wallpaper.
+[PlankTheme]
+TopRoundness=12
+BottomRoundness=0
+LineWidth=1
+OuterStrokeColor=0;;0;;0;;60
+FillStartColor=32;;33;;36;;217
+FillEndColor=32;;33;;36;;217
+InnerStrokeColor=255;;255;;255;;24
+
+[PlankDockTheme]
+HorizPadding=3
+TopPadding=2.5
+BottomPadding=4
+ItemPadding=3
+IndicatorSize=4
+IconShadowSize=0
+UrgentBounceHeight=1.6666666666666667
+LaunchBounceHeight=0.625
+FadeOpacity=1
+ClickTime=300
+UrgentBounceTime=600
+LaunchBounceTime=600
+ActiveTime=300
+SlideTime=300
+FadeTime=250
+HideTime=250
+GlowSize=30
+GlowTime=10000
+GlowPulseTime=2000
+UrgentHueShift=150
+ItemMoveTime=450
+CascadeHide=true
+BadgeColor=0;;0;;0;;0

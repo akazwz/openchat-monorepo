@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=浏览器
+Exec=heveta-browser %U
+Icon=/usr/local/share/heveta/browser.png
+Terminal=false
+StartupWMClass=heveta-browser

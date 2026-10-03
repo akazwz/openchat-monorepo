@@ -1,0 +1,18 @@
+{
+	"name": "heveta-computer-snapshot-migration",
+	"main": "./computer-snapshot-migration.ts",
+	"compatibility_date": "2026-09-20",
+	"compatibility_flags": ["nodejs_compat"],
+	"workers_dev": true,
+	"hyperdrive": [
+		{ "binding": "HYPERDRIVE", "id": "f067b74e6c654a9489525c797a5c8f04" },
+	],
+	"r2_buckets": [
+		{ "binding": "BACKUP_BUCKET", "bucket_name": "heveta-workspaces" },
+	],
+	"durable_objects": {
+		"bindings": [
+			{ "name": "COMPUTER", "class_name": "Computer", "script_name": "heveta" },
+		],
+	},
+}

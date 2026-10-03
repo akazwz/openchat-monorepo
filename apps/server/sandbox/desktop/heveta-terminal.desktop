@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=终端
+Exec=lxterminal --working-directory=/workspace
+Icon=/usr/local/share/heveta/terminal.png
+Terminal=false
+StartupWMClass=Lxterminal

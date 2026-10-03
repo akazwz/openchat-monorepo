@@ -1,0 +1,1 @@
+ALTER TABLE "threads" ADD COLUMN "title_source" text DEFAULT 'user' NOT NULL;

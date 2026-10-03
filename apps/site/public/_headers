@@ -1,0 +1,7 @@
+# Workers Static Assets response headers (not served itself).
+# Built files carry a hash of their content in their name, so a name never
+# changes content: browsers keep them for good instead of asking the server
+# again each time (a round trip that held up every navigation that re-adds a
+# page's stylesheet). Unhashed files keep the default revalidation.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

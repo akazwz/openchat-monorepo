@@ -1,0 +1,90 @@
+syntax = "proto3";
+package heveta.v1;
+
+import "google/protobuf/timestamp.proto";
+import "heveta/v1/model.proto";
+import "heveta/v1/run_status.proto";
+import "heveta/v1/thread.proto";
+
+service RunService {
+  rpc GetRun(GetRunRequest) returns (GetRunResponse);
+  rpc CancelRun(CancelRunRequest) returns (CancelRunResponse);
+}
+// One execution attempt answering a turn's input; its output message has
+// run_id set to its id.
+message Run {
+  string id = 1;
+  string thread_id = 2;
+  string turn_id = 3;
+  string request_id = 4;
+  // Attempts start at one within a turn; the turn's latest is the one shown.
+  uint32 attempt = 5;
+  string model = 6;
+  // Unspecified for a model whose reasoning cannot be adjusted.
+  ReasoningEffort reasoning_effort = 7;
+  RunStatus status = 8;
+  // A stop is recorded; it is complete once status is terminal.
+  bool cancel_requested = 9;
+  google.protobuf.Timestamp create_time = 10;
+  // Absent until execution starts.
+  google.protobuf.Timestamp start_time = 11;
+  // Absent until execution reaches a terminal state.
+  google.protobuf.Timestamp finish_time = 12;
+  // Empty selects the cloud computer; otherwise the immutable native target.
+  string device_id = 13;
+}
+message GetRunRequest {
+  string run_id = 1;
+}
+message GetRunResponse {
+  RunSnapshot snapshot = 1;
+}
+// A send whose run is not known yet is stopped by its request ID. If the
+// server has taken it, its reply is stopped; if not, the send is withdrawn:
+// the answer is NOT_FOUND with ERROR_REASON_REQUEST_WITHDRAWN, and the
+// request is refused with that reason whenever it arrives. Either way the
+// send has a definite outcome, even while its own request is still in flight.
+message CancelRunRequest {
+  oneof lookup {
+    string run_id = 1;
+    string request_id = 2;
+  }
+}
+message CancelRunResponse {
+  RunSnapshot snapshot = 1;
+}
+// The run and its messages at one committed revision.
+message RunSnapshot {
+  Run run = 1;
+  Message input_message = 2;
+  Message output_message = 3;
+  uint32 revision = 4;
+}
+message TextDelta {
+  string part_id = 1;
+  string text = 2;
+}
+message PartChange {
+  oneof change {
+    // Inserts or replaces a complete part at its stable ID.
+    MessagePart part = 1;
+    TextDelta text_delta = 2;
+  }
+}
+// What one committed transaction changed: the run's record and its output's
+// parts. Each change advances the revision by one; private execution
+// checkpoints do not.
+message RunChange {
+  uint32 revision = 1;
+  Run run = 2;
+  repeated PartChange changes = 3;
+  google.protobuf.Timestamp output_update_time = 4;
+}
+message RunEvent {
+  string run_id = 1;
+  oneof event {
+    // Replaces what is known of the run; its revision may equal the current.
+    RunSnapshot snapshot = 2;
+    RunChange change = 3;
+  }
+}

@@ -1,10 +1,10 @@
 version: v2
 plugins:
   - local: protoc-gen-es
-    out: packages/frontend/app/gen
+    out: apps/web/app/gen
     include_imports: true
     opt: target=ts
   - local: protoc-gen-es
-    out: packages/workers/src/gen
+    out: apps/server/src/gen
     include_imports: true
     opt: target=ts

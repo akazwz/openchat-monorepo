@@ -1,0 +1,155 @@
+{
+  "id": "BFC41C7F305D41CC0084F15A",
+  "default-configuration": "Release",
+  "configurations": [
+    "Debug",
+    "Release"
+  ],
+  "localizations": {
+    "development": "en"
+  },
+  "files": [
+    {
+      "kind": "folder",
+      "path": "Sources/Heveta",
+      "target-membership": [
+        "Heveta"
+      ]
+    },
+    {
+      "kind": "folder",
+      "path": "Resources",
+      "target-membership": [
+        "Heveta"
+      ]
+    },
+    {
+      "kind": "folder",
+      "path": "Tests/HevetaTests",
+      "target-membership": [
+        "HevetaTests"
+      ]
+    },
+    {
+      "kind": "group",
+      "name": "Products",
+      "children": [
+        {
+          "id": "BFC41C87305D41CC0084F15A",
+          "path": "<PRODUCTS>/Heveta.app",
+          "type": "wrapper.application",
+          "index": false
+        },
+        {
+          "id": "A00100000000000000000001",
+          "path": "<PRODUCTS>/HevetaTests.xctest",
+          "type": "wrapper.cfbundle",
+          "index": false
+        }
+      ]
+    }
+  ],
+  "targets": [
+    {
+      "name": "Heveta",
+      "id": "BFC41C86305D41CC0084F15A",
+      "product": "Products/Heveta.app",
+      "product-type": "application",
+      "build-phases": [
+        "compile-sources",
+        "frameworks",
+        "resources"
+      ],
+      "build-settings": {
+        "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
+        "CODE_SIGN_IDENTITY": "-",
+        "CODE_SIGN_STYLE": "Manual",
+        "CODE_SIGN_INJECT_BASE_ENTITLEMENTS[config=Release]": "NO",
+        "HEVETA_SIGNING_FLAGS": "",
+        "OTHER_CODE_SIGN_FLAGS[config=Release]": "$(HEVETA_SIGNING_FLAGS)",
+        "CURRENT_PROJECT_VERSION": "1",
+        "ENABLE_APP_SANDBOX": "NO",
+        "ENABLE_HARDENED_RUNTIME[config=Release]": "YES",
+        "GENERATE_INFOPLIST_FILE": "YES",
+        "LD_RUNPATH_SEARCH_PATHS": [
+          "$(inherited)",
+          "@executable_path/../Frameworks"
+        ],
+        "MARKETING_VERSION": "1.0",
+        "PRODUCT_BUNDLE_IDENTIFIER": "com.heveta.macos",
+        "PRODUCT_NAME": "$(TARGET_NAME)",
+        "SWIFT_DEFAULT_ACTOR_ISOLATION": "MainActor",
+        "SWIFT_VERSION": "6.0",
+        "INFOPLIST_KEY_LSApplicationCategoryType": "public.app-category.productivity"
+      },
+      "package-product-members": [
+        {
+          "product-name": "WebRTC",
+          "build-phase": {
+            "build-phase": "frameworks"
+          }
+        }
+      ]
+    },
+    {
+      "name": "HevetaTests",
+      "id": "A00100000000000000000002",
+      "product": "Products/HevetaTests.xctest",
+      "product-type": "bundle.unit-test",
+      "dependencies": [
+        "Heveta"
+      ],
+      "test-host-target": "Heveta",
+      "build-phases": [
+        "compile-sources",
+        "frameworks",
+        "resources"
+      ],
+      "build-settings": {
+        "GENERATE_INFOPLIST_FILE": "YES",
+        "PRODUCT_BUNDLE_IDENTIFIER": "com.heveta.macos.tests",
+        "CODE_SIGN_IDENTITY": "-",
+        "CODE_SIGN_STYLE": "Manual",
+        "SWIFT_VERSION": "6.0",
+        "SWIFT_DEFAULT_ACTOR_ISOLATION": "MainActor",
+        "TEST_HOST": "$(BUILT_PRODUCTS_DIR)/Heveta.app/Contents/MacOS/Heveta",
+        "BUNDLE_LOADER": "$(TEST_HOST)",
+        "PRODUCT_NAME": "$(TARGET_NAME)"
+      },
+      "package-product-members": [
+        {
+          "product-name": "WebRTC",
+          "build-phase": {
+            "build-phase": "frameworks"
+          }
+        }
+      ]
+    }
+  ],
+  "build-settings": {
+    "ALWAYS_SEARCH_USER_PATHS": "NO",
+    "DEBUG_INFORMATION_FORMAT[config=Release]": "dwarf-with-dsym",
+    "DEBUG_INFORMATION_FORMAT[config=Debug]": "dwarf",
+    "ENABLE_TESTABILITY[config=Debug]": "YES",
+    "ENABLE_USER_SCRIPT_SANDBOXING": "YES",
+    "MACOSX_DEPLOYMENT_TARGET": "14.0",
+    "ONLY_ACTIVE_ARCH[config=Debug]": "YES",
+    "SDKROOT": "macosx",
+    "SWIFT_ACTIVE_COMPILATION_CONDITIONS[config=Debug]": [
+      "DEBUG",
+      "$(inherited)"
+    ],
+    "SWIFT_COMPILATION_MODE[config=Release]": "wholemodule",
+    "SWIFT_OPTIMIZATION_LEVEL[config=Release]": "-O",
+    "SWIFT_OPTIMIZATION_LEVEL[config=Debug]": "-Onone"
+  },
+  "packages": [
+    {
+      "repository": "https://github.com/stasel/WebRTC.git",
+      "version": {
+        "version": "154.0.0"
+      },
+      "kind": "remote"
+    }
+  ]
+}

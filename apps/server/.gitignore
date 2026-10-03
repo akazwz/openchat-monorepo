@@ -1,0 +1,4 @@
+# Wrangler's local state (wrangler dev) and build output. Dependencies,
+# .env, and .dev.vars are ignored at the repository's root.
+/.wrangler/
+/.cloudflare/

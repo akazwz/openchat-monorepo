@@ -1,0 +1,1 @@
+ALTER TABLE "threads" ADD COLUMN "context_window" jsonb DEFAULT '{}' NOT NULL;

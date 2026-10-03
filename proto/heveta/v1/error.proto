@@ -1,0 +1,56 @@
+syntax = "proto3";
+package heveta.v1;
+
+// Attached to an error the client acts on, so it tells refusals apart by
+// reason rather than by the message, which is written for logs.
+message ErrorDetail {
+  ErrorReason reason = 1;
+}
+
+enum ErrorReason {
+  ERROR_REASON_UNSPECIFIED = 0;
+  // The requested model is not offered (any more).
+  ERROR_REASON_MODEL_UNKNOWN = 1;
+  // The model does not read the images or PDFs attached.
+  ERROR_REASON_MODEL_CANNOT_READ_FILES = 2;
+  // The images and PDFs attached are more than the model reads at once.
+  ERROR_REASON_MODEL_FILES_TOO_LARGE = 3;
+  // The conversation is already making a reply.
+  ERROR_REASON_RUN_ACTIVE = 4;
+  // The conversation changed since the client read it (another tab, device).
+  ERROR_REASON_RUN_CHANGED = 5;
+  // An attached file is missing, expired, or no longer available.
+  ERROR_REASON_ATTACHMENT_UNAVAILABLE = 6;
+  // The conversation does not exist, or was deleted.
+  ERROR_REASON_THREAD_NOT_FOUND = 7;
+  // The sign-in code is wrong, used, or expired.
+  ERROR_REASON_SIGN_IN_CODE_INVALID = 8;
+  // The sign-in code could not be mailed; a new one can be requested at once.
+  ERROR_REASON_SIGN_IN_CODE_NOT_SENT = 9;
+  // No more sign-in codes for this address today.
+  ERROR_REASON_SIGN_IN_CODES_EXHAUSTED = 10;
+  // A send stopped before the server took it: it was withdrawn and will
+  // never be taken (RunService.CancelRun by request ID).
+  ERROR_REASON_REQUEST_WITHDRAWN = 11;
+  // A reply is using the computer, so it cannot be restarted, restored, or
+  // cleared now.
+  ERROR_REASON_COMPUTER_BUSY = 12;
+  // The workspace's latest changes could not be saved; going on would lose
+  // them, so the request must say to discard them.
+  ERROR_REASON_WORKSPACE_UNSAVED = 13;
+  reserved 14;
+  reserved "ERROR_REASON_HUMAN_CHECK_FAILED";
+  // The service sends no more sign-in codes for now (its budget for all
+  // addresses together); try again later.
+  ERROR_REASON_SIGN_IN_CODES_PAUSED = 15;
+  // The address has no account and was not invited to create one.
+  ERROR_REASON_NOT_INVITED = 16;
+  // The device is not connected, or its owner has turned access off.
+  ERROR_REASON_DEVICE_OFFLINE = 17;
+  // The device may not show its screen (macOS Screen Recording).
+  ERROR_REASON_DEVICE_SCREEN_NOT_ALLOWED = 18;
+  // The device may not be controlled (macOS Accessibility).
+  ERROR_REASON_DEVICE_INPUT_NOT_ALLOWED = 19;
+  // Someone is already controlling the device; it can still be watched.
+  ERROR_REASON_DEVICE_CONTROLLED = 20;
+}

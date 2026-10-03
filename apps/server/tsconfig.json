@@ -1,0 +1,21 @@
+{
+	"exclude": [".cloudflare"],
+	"compilerOptions": {
+		"target": "ESNext",
+		"lib": ["ESNext"],
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"types": ["./.cloudflare/types/index.d.ts", "node"],
+		"allowImportingTsExtensions": true,
+		"resolveJsonModule": true,
+		"noEmit": true,
+		"forceConsistentCasingInFileNames": true,
+		"strict": true,
+		"noUnusedLocals": true,
+		"skipLibCheck": true,
+		"paths": {
+			"@/*": ["./src/*"]
+		},
+		"verbatimModuleSyntax": true
+	}
+}

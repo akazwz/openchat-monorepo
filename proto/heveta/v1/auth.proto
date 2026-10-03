@@ -1,0 +1,78 @@
+syntax = "proto3";
+package heveta.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// Sign-in is by email code only. The first successful sign-in for an address
+// creates its account; there are no passwords. A session is an HttpOnly
+// cookie the server sets on sign-in: the browser sends it with every request
+// and page scripts never see it (apps/server/README.md, 登录与附件).
+service AuthService {
+  // Sends a code to any valid address, with the same answer whether or not
+  // it has an account.
+  rpc SendSignInCode(SendSignInCodeRequest) returns (SendSignInCodeResponse);
+  // Starts a session: sets its cookie, and answers with the account.
+  rpc SignInWithEmailCode(SignInWithEmailCodeRequest) returns (SignInWithEmailCodeResponse);
+  // The account the session cookie belongs to.
+  rpc GetCurrentUser(GetCurrentUserRequest) returns (GetCurrentUserResponse);
+  rpc UpdateCurrentUser(UpdateCurrentUserRequest) returns (UpdateCurrentUserResponse);
+  // Replaces the account's profile photo, or removes it. The photo is
+  // private: only the account's own sessions can load it.
+  rpc SetAvatar(SetAvatarRequest) returns (SetAvatarResponse);
+  rpc RemoveAvatar(RemoveAvatarRequest) returns (RemoveAvatarResponse);
+  // Ends the session and clears its cookie; with no session, only clears it.
+  rpc SignOut(SignOutRequest) returns (SignOutResponse);
+}
+message User {
+  string id = 1;
+  string username = 2;
+  string email = 3;
+  google.protobuf.Timestamp create_time = 4;
+  google.protobuf.Timestamp update_time = 5;
+  // Where the profile photo loads from, for this account's own sessions;
+  // empty when there is none. It changes with the photo.
+  string avatar_url = 6;
+  // Monotonic profile version, shared by RPC responses and events.
+  uint32 revision = 7;
+}
+message SendSignInCodeRequest {
+  string email = 1;
+  reserved 2;
+  reserved "turnstile_token";
+}
+message SendSignInCodeResponse {
+  // Names the code sent; signing in takes it with the code. Guesses count
+  // against this code alone, so no one without it can use up or replace it.
+  string challenge = 1;
+}
+message SignInWithEmailCodeRequest {
+  string challenge = 1;
+  string code = 2;
+}
+message SignInWithEmailCodeResponse {
+  User user = 1;
+}
+message GetCurrentUserRequest {}
+message GetCurrentUserResponse {
+  User user = 1;
+}
+message UpdateCurrentUserRequest {
+  string username = 1;
+}
+message UpdateCurrentUserResponse {
+  User user = 1;
+}
+message SetAvatarRequest {
+  // A JPEG, PNG, or WebP image of at most 512 KB. The app sends it square and
+  // small (256 px); any other shape shows cropped to a circle.
+  bytes image = 1;
+}
+message SetAvatarResponse {
+  User user = 1;
+}
+message RemoveAvatarRequest {}
+message RemoveAvatarResponse {
+  User user = 1;
+}
+message SignOutRequest {}
+message SignOutResponse {}

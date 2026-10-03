@@ -1,0 +1,15 @@
+syntax = "proto3";
+package heveta.v1;
+
+// Where a run is in its lifecycle. Its own file so that both runs and the
+// messages they produce can carry it.
+enum RunStatus {
+  RUN_STATUS_UNSPECIFIED = 0;
+  RUN_STATUS_QUEUED = 1;
+  RUN_STATUS_RUNNING = 2;
+  RUN_STATUS_COMPLETED = 3;
+  RUN_STATUS_CANCELLED = 4;
+  RUN_STATUS_FAILED = 5;
+  // Formerly LIMIT_REACHED: runs have no step, token, or time budget.
+  reserved 6;
+}

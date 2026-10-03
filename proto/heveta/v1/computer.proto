@@ -1,0 +1,96 @@
+syntax = "proto3";
+package heveta.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// The user's computer: the Linux machine their runs' shell, file, and browser
+// tools use (docs/sandbox.md).
+service ComputerService {
+  // Besides these methods, with the session cookie: its screen, a WebSocket
+  // at /screen that carries VNC (RFB) for a noVNC client; a shell, a
+  // WebSocket at /terminal?cols=...&rows=... in the Sandbox SDK's PTY
+  // protocol; GET /computer-file?path=... downloads a file of the workspace,
+  // and POST /computer-file?path=<folder>&name=... adds one (the request body
+  // is the file).
+  //
+  // One folder of the computer's workspace (/workspace), not recursive.
+  rpc ListComputerFiles(ListComputerFilesRequest)
+      returns (ListComputerFilesResponse);
+  // How much the workspace holds. Asking wakes the computer.
+  rpc GetWorkspaceUsage(GetWorkspaceUsageRequest)
+      returns (GetWorkspaceUsageResponse);
+  // Stops the computer: running programs end, and the workspace comes back
+  // from its current snapshot when the computer is next used. Its latest
+  // changes are saved first. Refused while a reply is using the computer
+  // (ERROR_REASON_COMPUTER_BUSY), as are restoring and clearing; refused too
+  // when the latest changes cannot be saved (ERROR_REASON_WORKSPACE_UNSAVED)
+  // unless the request discards them.
+  rpc RestartComputer(RestartComputerRequest) returns (RestartComputerResponse);
+  // The workspace's unexpired snapshots, newest first, and which one it is
+  // now. Computer data expires after 30 days without use; conversations,
+  // memories and files already sent to conversations are kept separately.
+  rpc ListWorkspaceSnapshots(ListWorkspaceSnapshotsRequest)
+      returns (ListWorkspaceSnapshotsResponse);
+  // Puts a snapshot back as the workspace. The state it replaces is saved
+  // first and kept as a snapshot to come back to.
+  rpc RestoreWorkspaceSnapshot(RestoreWorkspaceSnapshotRequest)
+      returns (RestoreWorkspaceSnapshotResponse);
+  // Empties the workspace. The state before is saved first and kept as a
+  // snapshot to come back to.
+  rpc ClearWorkspace(ClearWorkspaceRequest) returns (ClearWorkspaceResponse);
+}
+message ComputerFile {
+  string name = 1;
+  // Absolute, within the workspace.
+  string path = 2;
+  bool is_directory = 3;
+  int64 size = 4;
+  google.protobuf.Timestamp modify_time = 5;
+}
+message ListComputerFilesRequest {
+  // A folder within /workspace; empty for /workspace itself.
+  string path = 1;
+}
+message ListComputerFilesResponse {
+  // The folder listed, absolute.
+  string path = 1;
+  // Folders first, then files, each by name; hidden ones are left out.
+  repeated ComputerFile files = 2;
+}
+message GetWorkspaceUsageRequest {
+}
+message GetWorkspaceUsageResponse {
+  int64 bytes = 1;
+}
+message RestartComputerRequest {
+  // Go on even if the latest changes cannot be saved; they are lost.
+  bool discard_unsaved = 1;
+}
+message RestartComputerResponse {}
+message WorkspaceSnapshot {
+  string id = 1;
+  google.protobuf.Timestamp create_time = 2;
+  // Native snapshots expire 30 days after creation or their last restore.
+  google.protobuf.Timestamp expire_time = 3;
+}
+message ListWorkspaceSnapshotsRequest {
+}
+message ListWorkspaceSnapshotsResponse {
+  repeated WorkspaceSnapshot snapshots = 1;
+  // The snapshot the workspace is now (the one its computer restores).
+  string current_snapshot_id = 2;
+  // Set while changes made since then could not be saved: the computer stays
+  // on until they are.
+  google.protobuf.Timestamp unsaved_since = 3;
+}
+message RestoreWorkspaceSnapshotRequest {
+  string snapshot_id = 1;
+  // As RestartComputerRequest.discard_unsaved.
+  bool discard_unsaved = 2;
+}
+message RestoreWorkspaceSnapshotResponse {}
+message ClearWorkspaceRequest {
+  // As RestartComputerRequest.discard_unsaved.
+  bool discard_unsaved = 1;
+}
+message ClearWorkspaceResponse {}

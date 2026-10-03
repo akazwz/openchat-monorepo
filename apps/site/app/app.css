@@ -1,0 +1,7 @@
+/* Astryx's reset and component styles, then Heveta's theme, built ahead of
+   time (packages/brand), so the prerendered page is themed from its first
+   paint. The same stack as the app's (apps/web/app/app.css). */
+@layer reset, astryx-base, astryx-theme;
+@import "@astryxdesign/core/reset.css";
+@import "@astryxdesign/core/astryx.css";
+@import "@heveta/brand/theme.css";

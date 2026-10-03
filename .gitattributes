@@ -1,0 +1,2 @@
+# Keep Wrangler's generated runtime declarations byte-for-byte for `types --check`.
+apps/server/worker-configuration.d.ts linguist-generated=true whitespace=-blank-at-eol

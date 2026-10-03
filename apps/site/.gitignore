@@ -1,0 +1,10 @@
+.DS_Store
+/node_modules/
+
+# React Router
+/.react-router/
+/build/
+
+# Wrangler's local state (wrangler dev)
+/.wrangler/
+/.cloudflare/

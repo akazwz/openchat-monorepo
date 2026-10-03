@@ -1,0 +1,122 @@
+/* The window's own page. Its colors, type and radii are the brand theme's
+   tokens (theme.css, written by scripts/build.mjs), so it reads as part of the
+   web app it frames. */
+:root {
+	color-scheme: light dark;
+	font-family: var(--font-family-body);
+	font-size: 16px;
+	background: var(--color-background-body);
+	color: var(--color-text-primary);
+}
+
+body {
+	margin: 0;
+	height: 100vh;
+	overflow: hidden;
+	user-select: none;
+	cursor: default;
+}
+
+[hidden] {
+	display: none !important;
+}
+
+/* Holds the window buttons; dragging it moves the window. */
+.band {
+	height: var(--band-height);
+	-webkit-app-region: drag;
+}
+
+/* Centered in the area the web app fills, so the web app's own loading mark
+   takes this one's place without a jump. */
+main {
+	position: fixed;
+	inset: var(--band-height) 0 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 24px;
+	text-align: center;
+}
+
+.mark {
+	width: 40px;
+	height: 40px;
+	fill: currentColor;
+}
+
+.spinner {
+	width: 20px;
+	height: 20px;
+	margin-top: 16px;
+	box-sizing: border-box;
+	border: 2px solid var(--color-border);
+	border-top-color: var(--color-text-secondary);
+	border-radius: 50%;
+	animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+h1 {
+	margin: 20px 0 0;
+	font-size: var(--font-size-lg);
+	font-weight: 600;
+	line-height: 1.4;
+}
+
+p {
+	margin: 4px 0 0;
+	max-width: 360px;
+	font-size: var(--font-size-base);
+	line-height: 1.5;
+	color: var(--color-text-secondary);
+}
+
+button {
+	margin-top: 20px;
+	height: 36px;
+	padding: 0 16px;
+	border: 0;
+	border-radius: var(--radius-element);
+	background: var(--color-accent);
+	color: var(--color-on-accent);
+	font: inherit;
+	font-size: var(--font-size-base);
+	font-weight: 500;
+	cursor: default;
+}
+
+button:active {
+	opacity: 0.85;
+}
+
+button:focus-visible {
+	outline: 2px solid var(--color-text-primary);
+	outline-offset: 2px;
+}
+
+/* While loading, the mark and the spinner say it; the words are for screen
+   readers. */
+main[data-status="loading"] h1 {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+}
+
+main:not([data-status="loading"]) .spinner {
+	display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.spinner {
+		animation-duration: 2.4s;
+	}
+}

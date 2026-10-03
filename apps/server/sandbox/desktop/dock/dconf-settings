@@ -1,0 +1,10 @@
+# The dock's settings (docs/sandbox.md), as system defaults: plank keeps its
+# settings in dconf, which has no session to write to when the image is
+# built. Locked (dconf-locks), so what plank writes at run time cannot
+# override them: it wrote back its own theme once there was a session bus.
+[net/launchpad/plank/docks/dock1]
+# Always shown: windows stop above it instead of hiding it.
+hide-mode='none'
+icon-size=40
+theme='Heveta'
+dock-items=['heveta-browser.dockitem', 'heveta-terminal.dockitem']

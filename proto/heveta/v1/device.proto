@@ -1,0 +1,54 @@
+syntax = "proto3";
+package heveta.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// Devices explicitly enabled in the native client. Cloud computers retain
+// their existing ComputerService and lifecycle.
+service DeviceService {
+  rpc RegisterDevice(RegisterDeviceRequest) returns (RegisterDeviceResponse);
+  rpc ListDevices(ListDevicesRequest) returns (ListDevicesResponse);
+  rpc RevokeDevice(RevokeDeviceRequest) returns (RevokeDeviceResponse);
+  rpc StartRemoteDesktop(StartRemoteDesktopRequest) returns (StartRemoteDesktopResponse);
+}
+
+message Device {
+  string id = 1;
+  string name = 2;
+  string platform = 3;
+  string os_version = 4;
+  string workspace_path = 5;
+  bool online = 6;
+  bool screen_allowed = 7;
+  bool input_allowed = 8;
+  google.protobuf.Timestamp create_time = 9;
+}
+message RegisterDeviceRequest {
+  string client_id = 1;
+  string name = 2;
+  string os_version = 3;
+  string workspace_path = 4;
+}
+message RegisterDeviceResponse {
+  Device device = 1;
+  // Returned only on explicit registration, for the native Keychain. Never
+  // save this credential in web storage or send it in a URL.
+  string credential = 2;
+}
+message ListDevicesRequest {}
+message ListDevicesResponse { repeated Device devices = 1; }
+message RevokeDeviceRequest { string device_id = 1; }
+message RevokeDeviceResponse {}
+message StartRemoteDesktopRequest {
+  string device_id = 1;
+  bool control = 2;
+}
+message IceServer {
+  repeated string urls = 1;
+  string username = 2;
+  string credential = 3;
+}
+message StartRemoteDesktopResponse {
+  string session_id = 1;
+  repeated IceServer ice_servers = 2;
+}

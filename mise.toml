@@ -1,0 +1,131 @@
+[tools]
+node = "26.9.0"
+pnpm = "12.5.1"
+buf = "1.73.0"
+
+[tasks.install]
+description = "Install the locked workspace dependencies"
+run = "pnpm install --frozen-lockfile"
+
+[tasks.dev]
+description = "Run the frontend and local Worker"
+run = "pnpm dev"
+
+[tasks."dev:web"]
+run = "pnpm dev:web"
+
+[tasks."dev:server"]
+run = "pnpm dev:server"
+
+[tasks."dev:site"]
+run = "pnpm dev:site"
+
+[tasks."dev:macos"]
+description = "Build and open the native macOS client"
+dir = "apps/macos"
+run = "mise run dev"
+
+[tasks."dev:electron"]
+description = "Build and run the Electron macOS desktop app"
+run = "pnpm dev:electron"
+
+[tasks."build:electron"]
+description = "Build the Electron main process"
+run = "pnpm build:electron"
+
+[tasks."package:electron"]
+description = "Package the Electron macOS development app"
+run = "pnpm package:electron"
+
+[tasks."install:electron"]
+description = "Build and install Heveta Electron in ~/Applications"
+run = "pnpm install:electron"
+
+[tasks."build:macos"]
+description = "Build the native macOS client (Debug)"
+dir = "apps/macos"
+run = "mise run build"
+
+[tasks."release:macos"]
+description = "Build the universal macOS client (Release)"
+dir = "apps/macos"
+run = "mise run release"
+
+[tasks.gen]
+description = "Generate TypeScript from protobuf schemas"
+run = "pnpm gen"
+
+[tasks."gen:env"]
+description = "Generate Worker runtime and binding types"
+run = "pnpm --filter @heveta/server cf-typegen"
+
+[tasks.lint]
+run = "pnpm check"
+
+[tasks."lint:proto"]
+run = "buf lint"
+
+[tasks."lint:migrations"]
+description = "Fail when the database schema has changes without a migration"
+run = "bash scripts/check-migrations.sh"
+
+[tasks.typecheck]
+run = "pnpm typecheck"
+
+[tasks.test]
+run = "pnpm test"
+
+[tasks.check]
+description = "Run lint, protobuf lint, the migration check, type checks, unit tests, and the PostgreSQL integration tests"
+depends = [
+	"lint",
+	"lint:proto",
+	"lint:migrations",
+	"typecheck",
+	"test",
+	"test:integration",
+]
+
+[tasks."build:web"]
+run = "pnpm build:web"
+
+[tasks.build]
+description = "Build the frontend and validate the Worker bundle without deploying"
+run = "pnpm build"
+
+[tasks.deploy]
+description = "Build and deploy to Cloudflare"
+run = "pnpm run deploy"
+
+[tasks."deploy:site"]
+description = "Build and deploy the public site (heveta.com)"
+run = "pnpm deploy:site"
+
+[tasks."db:generate"]
+description = "Generate a migration from schema changes"
+run = "pnpm --filter @heveta/server exec drizzle-kit generate --config drizzle.dev.config.ts"
+
+[tasks."db:up"]
+description = "Start the persistent local PostgreSQL database"
+run = "pnpm db:up"
+
+[tasks."db:down"]
+description = "Stop local PostgreSQL and keep its data"
+run = "pnpm db:down"
+
+[tasks."db:setup"]
+description = "Start local PostgreSQL and apply local migrations"
+run = "pnpm db:setup"
+
+[tasks."db:migrate"]
+description = "Apply pending PostgreSQL migrations"
+run = "pnpm --filter @heveta/server exec drizzle-kit migrate --config drizzle.dev.config.ts"
+
+[tasks."test:integration"]
+description = "Test Connect routes against a disposable PostgreSQL 18 container"
+run = "pnpm test:integration"
+
+[tasks."test:macos"]
+description = "Run native macOS tests"
+dir = "apps/macos"
+run = "mise run test"

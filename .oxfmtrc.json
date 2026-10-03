@@ -1,0 +1,18 @@
+{
+	"$schema": "./node_modules/oxfmt/configuration_schema.json",
+	"useTabs": true,
+	"printWidth": 80,
+	"sortImports": true,
+	"ignorePatterns": [
+		"**/gen",
+		"**/.wrangler",
+		"**/build",
+		"**/worker-configuration.d.ts",
+		"**/.react-router",
+		"pnpm-lock.yaml",
+		"packages/brand/src/theme/heveta.css",
+		"packages/brand/src/theme/heveta.js",
+		"packages/brand/src/theme/heveta.d.ts",
+		"packages/brand/src/theme/heveta.variants.d.ts"
+	]
+}

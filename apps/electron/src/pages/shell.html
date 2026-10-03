@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta
+			http-equiv="Content-Security-Policy"
+			content="default-src 'none'; script-src 'self'; style-src 'self'"
+		/>
+		<title>Heveta</title>
+		<link rel="stylesheet" href="theme.css" />
+		<link rel="stylesheet" href="shell.css" />
+		<script src="shell.js" defer></script>
+	</head>
+	<body>
+		<div class="band"></div>
+		<main hidden>
+			<svg class="mark" viewBox="{{brandMarkViewBox}}" aria-hidden="true">
+				<path fill-rule="evenodd" d="{{brandMarkPath}}" />
+			</svg>
+			<div class="spinner" aria-hidden="true"></div>
+			<h1></h1>
+			<p hidden></p>
+			<button type="button" hidden></button>
+		</main>
+	</body>
+</html>

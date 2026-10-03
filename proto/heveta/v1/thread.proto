@@ -1,0 +1,174 @@
+syntax = "proto3";
+package heveta.v1;
+
+import "heveta/v1/file.proto";
+import "heveta/v1/run_status.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+// Threads are created by TurnService.StartTurn with its first input.
+service ThreadService {
+  rpc GetThread(GetThreadRequest) returns (GetThreadResponse);
+  rpc ListThreads(ListThreadsRequest) returns (ListThreadsResponse);
+  rpc UpdateThread(UpdateThreadRequest) returns (UpdateThreadResponse);
+  rpc DeleteThread(DeleteThreadRequest) returns (DeleteThreadResponse);
+  rpc ListMessages(ListMessagesRequest) returns (ListMessagesResponse);
+  // One tool result whole, whose output a listed message left out.
+  rpc GetToolResult(GetToolResultRequest) returns (GetToolResultResponse);
+}
+message Thread {
+  string id = 1;
+  string title = 2;
+  // When its latest run began (a new turn's, or another attempt at one; the
+  // first began as it was created): conversations are listed by it, the most
+  // recently active first. A rename is not activity.
+  google.protobuf.Timestamp active_time = 3;
+  // Whether a reply is being written in it: its latest run, the one that began
+  // at active_time, has not finished. A copy of this record and a run's events
+  // agree by that time: the later time is the later state, and at the same
+  // time a finished run stays finished (it only finishes once).
+  bool running = 4;
+  // Monotonic title version. Activity/run state is ordered independently.
+  uint32 revision = 5;
+}
+enum MessageRole {
+  MESSAGE_ROLE_UNSPECIFIED = 0;
+  MESSAGE_ROLE_USER = 1;
+  MESSAGE_ROLE_ASSISTANT = 2;
+}
+enum MessagePhase {
+  MESSAGE_PHASE_UNSPECIFIED = 0;
+  MESSAGE_PHASE_COMMENTARY = 1;
+  MESSAGE_PHASE_FINAL_ANSWER = 2;
+}
+enum AssistantMessageStatus {
+  ASSISTANT_MESSAGE_STATUS_UNSPECIFIED = 0;
+  ASSISTANT_MESSAGE_STATUS_IN_PROGRESS = 1;
+  ASSISTANT_MESSAGE_STATUS_COMPLETED = 2;
+  ASSISTANT_MESSAGE_STATUS_INCOMPLETE = 3;
+}
+// Preserves the model's message and content boundaries across a run's text parts.
+// History replays the complete message content, never a provider item_reference.
+message AssistantTextMetadata {
+  string message_id = 1;
+  uint32 content_index = 2;
+  MessagePhase phase = 3;
+  bool refusal = 4;
+  AssistantMessageStatus status = 5;
+}
+// Where a tool call does its work, which is how the app shows it.
+enum ToolSurface {
+  // A tool the run did not have.
+  TOOL_SURFACE_UNSPECIFIED = 0;
+  // In the service: searching and reading the web, memory, past
+  // conversations.
+  TOOL_SURFACE_SERVICE = 1;
+  // On the user's computer: commands and files. Following along means
+  // watching the computer.
+  TOOL_SURFACE_COMPUTER = 2;
+  // In the browser on the computer's screen.
+  TOOL_SURFACE_BROWSER = 3;
+  // Hands the person a file, which follows the call as its own part of the
+  // reply.
+  TOOL_SURFACE_DELIVERY = 4;
+}
+message ToolCall {
+  string id = 1;
+  string name = 2;
+  google.protobuf.Struct arguments = 3;
+  ToolSurface surface = 4;
+}
+message ToolResult {
+  string tool_call_id = 1;
+  string name = 2;
+  google.protobuf.Value output = 3;
+  bool is_error = 4;
+  // Images the model read as part of this result (view_image): stored copies
+  // that never change, so the model's context stays the same across requests.
+  repeated File images = 5;
+  // A listed message leaves out long outputs (output is unset): a reply's
+  // tool results can be megabytes, and few are ever opened. GetToolResult
+  // has it whole.
+  bool output_omitted = 6;
+}
+message MessagePart {
+  string id = 1;
+  oneof content {
+    string text = 2;
+    File file = 3;
+    ToolCall tool_call = 4;
+    ToolResult tool_result = 5;
+    Reasoning reasoning = 8;
+  }
+  AssistantTextMetadata assistant_text = 6;
+}
+// The provider's summary of the model's reasoning before it acted or
+// answered. Shown to people, never sent back to the model.
+message Reasoning {
+  string text = 1;
+}
+message Message {
+  string id = 1;
+  string thread_id = 2;
+  string turn_id = 3;
+  // Empty for user input; set for the assistant output of a run.
+  string run_id = 4;
+  MessageRole role = 5;
+  repeated MessagePart parts = 6;
+  google.protobuf.Timestamp create_time = 7;
+  google.protobuf.Timestamp update_time = 8;
+  // Of the run that produced this assistant output, as of this copy; unset
+  // for user input. The transcript shows each reply from its message alone:
+  // how its run ended (stopped, failed), whether it is still running or
+  // being stopped, and which attempt of its turn it is.
+  RunStatus run_status = 9;
+  uint32 run_attempt = 10;
+  bool run_cancel_requested = 11;
+  // The run's revision this copy reflects: a run change applies to it when
+  // it is the next revision, and a copy with an older one is replaced.
+  uint32 run_revision = 12;
+}
+message GetThreadRequest {
+  string thread_id = 1;
+}
+message GetThreadResponse {
+  Thread thread = 1;
+}
+message ListThreadsRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+  optional string query = 3;
+}
+message ListThreadsResponse {
+  repeated Thread threads = 1;
+  string next_page_token = 2;
+}
+message UpdateThreadRequest {
+  Thread thread = 1;
+  google.protobuf.FieldMask update_mask = 2;
+}
+message UpdateThreadResponse {
+  Thread thread = 1;
+}
+message DeleteThreadRequest {
+  string thread_id = 1;
+}
+message DeleteThreadResponse {}
+// Pages are newest-first; messages within each page are oldest-first for rendering.
+message ListMessagesRequest {
+  string thread_id = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+message ListMessagesResponse {
+  repeated Message messages = 1;
+  string next_page_token = 2;
+}
+message GetToolResultRequest {
+  string message_id = 1;
+  string tool_call_id = 2;
+}
+message GetToolResultResponse {
+  ToolResult result = 1;
+}
