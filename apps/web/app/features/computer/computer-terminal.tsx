@@ -14,6 +14,7 @@ import { socketUrl } from "~/features/events/event-channel";
 import { useT } from "~/i18n/use-t";
 import { usePageVisible } from "~/lib/use-page-visible";
 
+import { ComputerTabs } from "./computer-tabs";
 import { ConnectionStatus } from "./connection-status";
 import { useReconnect } from "./reconnect";
 
@@ -122,7 +123,8 @@ export default function ComputerTerminal() {
 		<Layout
 			header={
 				<AppPageHeader
-					title={t("computer.terminal")}
+					title={t("computer.title")}
+					tabs={<ComputerTabs view="terminal" />}
 					end={
 						<>
 							<ConnectionStatus

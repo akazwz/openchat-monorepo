@@ -18,6 +18,7 @@ export const threadResource = (thread: Thread) =>
 		revision: thread.revision,
 		activeTime: timestampFromDate(thread.activeAt),
 		running: thread.running,
+		main: thread.main,
 	});
 // The run that produced an assistant output, as the output carries it.
 export type OutputRun = Pick<Run, "status" | "attempt" | "cancelRequested"> & {
@@ -35,6 +36,7 @@ export function messageToProto(
 		runId: message.runId ?? "",
 		role: message.role === "user" ? MessageRole.USER : MessageRole.ASSISTANT,
 		parts: message.parts.map((part) => partToProto(part, options)),
+		scheduled: message.scheduled === true,
 		createTime: timestampFromDate(message.createdAt),
 		updateTime: timestampFromDate(message.updatedAt),
 		...(run

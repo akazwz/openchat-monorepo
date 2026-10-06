@@ -20,6 +20,7 @@ import {
 } from "./responses/types";
 import {
 	type PendingToolCall,
+	refusedToolOutcome,
 	resumeTool,
 	runTool,
 	type ToolOutcome,
@@ -53,7 +54,9 @@ function validCheckpoint(checkpoint: LoopCheckpoint) {
 // The kernel owns model scheduling. It knows neither a database Run nor a
 // product Message. It runs until the model replies without calling a tool;
 // there is no step, token, or time budget, and only cancellation (the signal)
-// or an error ends it early. The owner persists output and each awaited
+// or an error ends it early. A call that needs the person's consent stops it
+// without ending the run (StopReason.WAITING): the owner starts it again from
+// the checkpoint once the answer is recorded there. The owner persists output and each awaited
 // checkpoint together before allowing another operation to begin. Context and
 // checkpoints hold file references; `files` builds each request's file data
 // before the model boundary is committed, so a failed read never sends a
@@ -101,14 +104,21 @@ export async function* agentLoop(
 	// saved). Only read-only calls run concurrently, so of a step an
 	// interrupted execution left, only the first pending call can have started
 	// and be unsafe to run again (`resumed`); the rest run as new.
+	// A call that needs the person's consent (docs/approvals.md) is asked
+	// about when its turn comes, those before it answered: the boundary is
+	// saved with the request and this returns true, the calls from it on still
+	// pending. With their answer in the checkpoint, the next execution runs it
+	// or tells the model it was refused, and goes on.
 	async function* answer(
 		calls: PendingToolCall[],
 		resumed: boolean,
-	): AsyncGenerator<LoopEvent, void> {
+	): AsyncGenerator<LoopEvent, boolean> {
 		const spec = (call: PendingToolCall) => specOf(call.name);
 		const readOnly = (call: PendingToolCall) => spec(call)?.readOnly === true;
 		const concurrent = (call: PendingToolCall) =>
 			spec(call)?.concurrent === true && readOnly(call);
+		const asks = (call: PendingToolCall) =>
+			spec(call)?.consent === true && !readOnly(call) && !call.started;
 		const started = new Map<PendingToolCall, Promise<ToolOutcome>>();
 		let remaining = [...calls];
 		const startCalls = async (group: PendingToolCall[]) => {
@@ -144,13 +154,36 @@ export async function* agentLoop(
 					started.set(next, running);
 				}
 			}
+			const refused = asks(call) && call.consent === "refused";
+			if (asks(call) && !refused && call.consent !== "granted") {
+				if (call.consent !== "requested") {
+					call.consent = "requested";
+					yield* callEvents([call]);
+					await save("tools", {
+						steps: [
+							{
+								index: call.stepIndex,
+								kind: "tool",
+								toolName: call.name,
+								status: "pending",
+								consent: "requested",
+							},
+						],
+						pendingCalls: remaining,
+					});
+				}
+				return true;
+			}
 			const collect = resumed && call.started === true && !readOnly(call);
-			if (!collect && !started.has(call)) await startCalls([call]);
+			if (!refused && !collect && !started.has(call)) await startCalls([call]);
 			// A call that may have taken effect is collected, not repeated; when
-			// that is not possible its outcome is reported as unknown.
-			const outcome = collect
-				? await resumeTool(tools, call, signal)
-				: await (started.get(call) ?? runTool(tools, call, signal));
+			// that is not possible its outcome is reported as unknown. One the
+			// person refused never runs.
+			const outcome = refused
+				? refusedToolOutcome
+				: collect
+					? await resumeTool(tools, call, signal)
+					: await (started.get(call) ?? runTool(tools, call, signal));
 			signal.throwIfAborted();
 			messages = [
 				...messages,
@@ -188,6 +221,7 @@ export async function* agentLoop(
 				pendingCalls: remaining,
 			});
 		}
+		return false;
 	}
 	const callEvents = (calls: PendingToolCall[]): LoopEvent[] =>
 		calls.map((call) => ({
@@ -197,6 +231,7 @@ export async function* agentLoop(
 			name: call.name,
 			arguments: call.arguments,
 			surface: tools.specs.find((spec) => spec.name === call.name)?.surface,
+			...(call.consent ? { consent: call.consent } : {}),
 		}));
 
 	if (!checkpoint) await save("ready", {});
@@ -204,7 +239,7 @@ export async function* agentLoop(
 		const pending = checkpoint.pendingCalls ?? [];
 		// Parts for these calls may not have been published before the stop.
 		yield* callEvents(pending);
-		yield* answer(pending, true);
+		if (yield* answer(pending, true)) return StopReason.WAITING;
 	}
 	while (true) {
 		signal.throwIfAborted();
@@ -335,6 +370,6 @@ export async function* agentLoop(
 			pendingCalls: pending,
 		});
 		yield* callEvents(pending);
-		yield* answer(pending, false);
+		if (yield* answer(pending, false)) return StopReason.WAITING;
 	}
 }

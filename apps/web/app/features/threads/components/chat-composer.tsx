@@ -72,7 +72,14 @@ const attachmentKinds: {
 
 // The provider owns the draft and uploads. This component can safely remount when
 // the shell changes its responsive structure or the selected thread changes.
-export function ChatComposer({ disabled }: { disabled: boolean }) {
+export function ChatComposer({
+	disabled,
+	placeholder,
+}: {
+	disabled: boolean;
+	// In place of the general one: the main conversation names the agent.
+	placeholder?: string;
+}) {
 	const {
 		setMessage,
 		send,
@@ -188,7 +195,7 @@ export function ChatComposer({ disabled }: { disabled: boolean }) {
 					<ChatComposerInput
 						handleRef={handleRef}
 						label={t("threads.messageLabel")}
-						placeholder={t("threads.messagePlaceholder")}
+						placeholder={placeholder ?? t("threads.messagePlaceholder")}
 						value={message}
 						onChange={setMessage}
 						onFiles={attach}

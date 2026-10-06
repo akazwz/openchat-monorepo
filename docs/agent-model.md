@@ -13,7 +13,7 @@ Thread
         └── 助手 Message（其 runId 指向该 Run）
 ```
 
-- Thread 是对话容器；同一 Thread 同时最多一个活动 Run。
+- Thread 是对话容器；同一 Thread 同时最多一个活动 Run。每个用户有一个主对话（`main`，应用的首页，见 agent-form.md）：第一次读时创建，没有标题，不能改名或删除，不在对话列表里；其余 Thread 是旁支对话。两者的 Turn、Run、Message 没有区别。
 - Turn 固定一次用户输入。它只存身份（id、thread、user、创建时间）：它的输入是 turnId 为它、role 为 user 的那条消息，它的尝试是 turnId 为它的 Run，显示的是 attempt 最大的那次。这些关系都由子表指向父表的外键表达，不在父表上另存一份指针。
 - 新输入创建 Turn 和第一个 Run。重新生成针对最新 Turn 的最新一次尝试，创建同一 Turn 下 attempt 加一的 Run，原 Run 和输出保留（不再显示）。
 - Run 是一次执行尝试，拥有 turnId、attempt、模型、推理强度、执行状态、时间、取消意图和 revision；失败的原因只记在服务端日志用的 `error` 里，不对外。Run 没有步数、token 或时长预算，也不存统计数：用量记在 Step 上。
@@ -26,9 +26,11 @@ Thread
 
 - TurnService.StartTurn(threadId, requestId, input)：接受新输入，原子创建 Turn/用户消息/Run/助手消息，返回 RunSnapshot。threadId 为空时在同一事务中创建以输入命名的新 Thread，并在响应里一并返回它（重放同样返回）；没有单独的 CreateThread。
 - TurnService.RetryTurn(turnId, previousRunId, requestId)：previousRunId 必须是该 Thread 最新 Turn 的最新尝试（在 Thread 行锁下检查，两个重试不能从同一次尝试分叉），原子创建下一次尝试，返回 RunSnapshot。
+- RunService.AnswerToolCall(runId, toolCallId, approved)：答复一次等待用户同意的工具调用（approvals.md）。等待期间 Run 仍是 RUNNING，那次调用的 Step 是 PENDING。
 - RunService.GetRun/CancelRun：查询、停止具体执行尝试；不将这些动作隐式指向另一个尝试。进度不靠 RPC 观察，而是由事件通道推送（见 sync.md）。
 - RunSnapshot 包含 run、inputMessage、outputMessage 和 revision；RunChange 带自己的 revision、Run 和输出片段的变化。
 - 同一 requestId 只接受同一命令，重复的请求返回原来的 Run；结果未知的提交用同一个 requestId 重发即可。
+- ThreadService.GetMainThread：返回用户的主对话，没有则创建（部分唯一索引保证并发时只有一个）。ListThreads 只列旁支对话；UpdateThread、DeleteThread 对主对话返回 FailedPrecondition。
 - 只提供界面用到的接口：Turn、Run 的历史和 Step 列表没有单独的查询 RPC，对话里显示的内容由 ThreadService.ListMessages 和 RunSnapshot 给出。
 
 ## 数据和一致性

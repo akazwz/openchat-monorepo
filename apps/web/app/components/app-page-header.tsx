@@ -4,32 +4,42 @@ import { IconButton } from "@astryxdesign/core/IconButton";
 import { HStack, LayoutHeader, StackItem } from "@astryxdesign/core/Layout";
 import { MobileNavToggle } from "@astryxdesign/core/MobileNav";
 import { Skeleton } from "@astryxdesign/core/Skeleton";
+import { VisuallyHidden } from "@astryxdesign/core/VisuallyHidden";
 import { ArrowLeft } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { useT } from "~/i18n/use-t";
 
 // Every app page has one full-width header; page controls stay at its end.
+// A place with several views (the computer) shows their tabs where the title
+// would be; the title is then the page's heading for assistive technology
+// only.
 export function AppPageHeader({
 	title,
+	tabs,
 	detail,
 	back,
 	end,
 }: {
 	title?: string;
+	tabs?: ReactNode;
 	detail?: ReactNode;
 	back?: { href: string; label: string };
 	end?: ReactNode;
 }) {
 	const t = useT();
-	const heading =
-		title === undefined ? (
-			<Skeleton width={120} height={20} />
-		) : (
-			<Heading level={4} accessibilityLevel={1} maxLines={1}>
-				{title}
-			</Heading>
-		);
+	const heading = tabs ? (
+		<>
+			<VisuallyHidden as="h1">{title}</VisuallyHidden>
+			{tabs}
+		</>
+	) : title === undefined ? (
+		<Skeleton width={120} height={20} />
+	) : (
+		<Heading level={4} accessibilityLevel={1} maxLines={1}>
+			{title}
+		</Heading>
+	);
 	return (
 		<LayoutHeader padding={3} hasDivider>
 			<HStack gap={2} vAlign="center">

@@ -36,7 +36,7 @@ export function installMenu(shell: ShellWindow) {
 				{
 					label: text("newChat"),
 					accelerator: "Command+N",
-					click: () => shell.navigate("/"),
+					click: () => shell.navigate("/new"),
 				},
 				{
 					label: text("showDownloads"),
@@ -126,7 +126,7 @@ export function installMenu(shell: ShellWindow) {
 	app.dock?.setMenu(
 		Menu.buildFromTemplate([
 			{ label: text("showWindow"), click: () => shell.focus() },
-			{ label: text("newChat"), click: () => shell.navigate("/") },
+			{ label: text("newChat"), click: () => shell.navigate("/new") },
 		]),
 	);
 	refreshMenu(shell);

@@ -37,6 +37,15 @@ export async function cancelRunExecution(runId: string) {
 	await actor(runId).cancel(runId);
 }
 
+// The person's answer to a call waiting for their consent
+// (docs/approvals.md). The actor records it and goes on with the run.
+export const answerRunToolCall = (
+	runId: string,
+	userId: string,
+	callId: string,
+	approved: boolean,
+) => actor(runId).answer(runId, userId, callId, approved);
+
 async function activeBody(runId: string, userId: string, part: PartDescriptor) {
 	const chunks: string[] = [];
 	let after = -1;

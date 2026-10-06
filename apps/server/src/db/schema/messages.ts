@@ -1,5 +1,6 @@
 import { type SQLWrapper, sql } from "drizzle-orm";
 import {
+	boolean,
 	check,
 	foreignKey,
 	index,
@@ -32,6 +33,9 @@ export const messages = snakeCase.table(
 		runId: text(),
 		role: text().$type<"user" | "assistant">().notNull(),
 		parts: storedJson<StoredMessagePart[]>().notNull().default([]),
+		// A turn's input given by a schedule's wake-up (schedules.ts), not
+		// written by the user: shown as such.
+		scheduled: boolean().notNull().default(false),
 		// Its text parts joined (threads/history.ts messageText), which the
 		// agent's conversation tools search and read: written with the parts
 		// (a reply's at each of its run's boundaries), so a search reads one

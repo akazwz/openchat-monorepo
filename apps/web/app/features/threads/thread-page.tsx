@@ -21,7 +21,7 @@ import { Text } from "@astryxdesign/core/Text";
 import { VisuallyHidden } from "@astryxdesign/core/VisuallyHidden";
 import { create } from "@bufbuild/protobuf";
 import { Code, ConnectError } from "@connectrpc/connect";
-import { pageTitle } from "@heveta/brand";
+import { BrandMark, brandName, pageTitle } from "@heveta/brand";
 import {
 	useInfiniteQuery,
 	useQuery,
@@ -29,6 +29,7 @@ import {
 } from "@tanstack/react-query";
 import { SquarePen } from "lucide-react";
 import { useCallback } from "react";
+import { useMatch } from "react-router";
 
 import { QueryError } from "~/components/query-error";
 import { useProfile } from "~/features/auth/profile";
@@ -41,6 +42,7 @@ import {
 } from "~/features/threads/components/chat-bubble";
 import { ChatComposer } from "~/features/threads/components/chat-composer";
 import {
+	mainThreadQuery,
 	messagesQuery,
 	threadQuery,
 	threadsQuery,
@@ -65,6 +67,19 @@ function timeGreeting(t: Translate, hour = new Date().getHours()) {
 					? "threads.greetingAfternoon"
 					: "threads.greetingEvening";
 	return t(key);
+}
+
+// Who the main conversation is with, as a messaging app heads a conversation
+// with a person: at its start, above the first message.
+function AgentIdentity() {
+	return (
+		<VStack gap={2} align="center" padding={4}>
+			<BrandMark size={44} />
+			<Heading level={3} accessibilityLevel={2}>
+				{brandName}
+			</Heading>
+		</VStack>
+	);
 }
 
 const isNotFound = (error: unknown) =>
@@ -101,7 +116,7 @@ function PageHeader({ title }: { title?: string }) {
 						tooltip={t("threads.newThread")}
 						icon={<Icon icon={SquarePen} size="sm" />}
 						variant="ghost"
-						href="/"
+						href="/new"
 					/>
 				)}
 			</HStack>
@@ -127,6 +142,14 @@ export default function ThreadPage() {
 		isReconnecting,
 	} = useConversationState();
 	const { regenerate } = useThreadCommands();
+	// The home page is the main conversation. Until which one that is has been
+	// read, the page is loading and takes no input: drawn as a conversation
+	// with no address, it would be a new one's, and what was typed there
+	// would not be in the main conversation when it arrived.
+	const isHome = Boolean(useMatch("/"));
+	const mainThread = useQuery(mainThreadQuery(userId));
+	const findingMain = isHome && !threadId;
+	const mainFailed = findingMain && mainThread.isError;
 	const {
 		data,
 		error,
@@ -163,13 +186,15 @@ export default function ThreadPage() {
 		Boolean(threadId) && (isNotFound(error) || isNotFound(threadError));
 	const { show } = useThreadsInFlight();
 	const shownThread = thread && show(thread);
-	const title = !threadId
-		? pendingTitle
-		: shownThread
-			? displayTitle(t, shownThread)
-			: threadError
-				? ""
-				: undefined;
+	const title = isHome
+		? brandName
+		: !threadId
+			? pendingTitle
+			: shownThread
+				? displayTitle(t, shownThread)
+				: threadError
+					? ""
+					: undefined;
 	// Every message shows from the list, the reply being made too: run events
 	// update it there (docs/sync.md).
 	// A reply being regenerated gives its place to the new attempt's loader.
@@ -186,24 +211,42 @@ export default function ThreadPage() {
 				message.runId === replacedRunId
 			),
 	);
-	const empty = !messages.length && !isSending && !isLoading && !isError;
-	const loading = isLoading && !messages.length && !isSending;
+	const empty =
+		!findingMain && !messages.length && !isSending && !isLoading && !isError;
+	const loading = findingMain
+		? !mainFailed
+		: isLoading && !messages.length && !isSending;
 	const { isMobile } = useAppShellMobile();
 	const composer = (
 		<ChatComposer
-			disabled={Boolean(threadId) && (isLoading || (isError && !data))}
+			disabled={
+				findingMain || (Boolean(threadId) && (isLoading || (isError && !data)))
+			}
+			placeholder={
+				isHome ? t("threads.messageAgent", { name: brandName }) : undefined
+			}
 		/>
 	);
 	// AI Chat Landing: one line, a greeting by name, as in Claude and Gemini.
 	// It is the page's heading; the composer under it says what to do.
-	const greeting = (
+	const greetingText = username
+		? t("threads.greetingWithName", {
+				greeting: timeGreeting(t),
+				name: username,
+			})
+		: timeGreeting(t);
+	// The main conversation opens on the agent itself, greeting its person; a
+	// side conversation on the greeting alone.
+	const greeting = isHome ? (
+		<VStack gap={1} align="center">
+			<AgentIdentity />
+			<Text type="large" color="secondary" justify="center">
+				{greetingText}
+			</Text>
+		</VStack>
+	) : (
 		<Text type="display-3" as={threadId ? "p" : "h1"} justify="center">
-			{username
-				? t("threads.greetingWithName", {
-						greeting: timeGreeting(t),
-						name: username,
-					})
-				: timeGreeting(t)}
+			{greetingText}
 		</Text>
 	);
 	// A deleted or foreign conversation: nothing to show and nothing to send to.
@@ -224,7 +267,7 @@ export default function ThreadPage() {
 									<Button
 										label={t("threads.newThread")}
 										variant="primary"
-										href="/"
+										href="/new"
 									/>
 								}
 							/>
@@ -242,7 +285,7 @@ export default function ThreadPage() {
 	if (empty && !isMobile)
 		return (
 			<>
-				<title>{pageTitle(title || undefined)}</title>
+				<title>{pageTitle(isHome ? undefined : title || undefined)}</title>
 				<Layout
 					height="fill"
 					header={<PageHeader title={title} />}
@@ -259,7 +302,7 @@ export default function ThreadPage() {
 		);
 	return (
 		<>
-			<title>{pageTitle(title || undefined)}</title>
+			<title>{pageTitle(isHome ? undefined : title || undefined)}</title>
 			<Layout
 				height="fill"
 				header={<PageHeader title={title} />}
@@ -274,12 +317,18 @@ export default function ThreadPage() {
 							emptyState={
 								loading ? (
 									<Spinner aria-label={t("threads.loadingMessages")} />
+								) : mainFailed ? (
+									<QueryError
+										title={t("threads.messagesLoadFailed")}
+										pending={mainThread.isFetching}
+										onRetry={() => void mainThread.refetch()}
+									/>
 								) : (
 									greeting
 								)
 							}
 						>
-							{empty || loading ? null : (
+							{empty || loading || mainFailed ? null : (
 								<ChatMessageList
 									align="top"
 									isStreaming={isPending}
@@ -290,6 +339,8 @@ export default function ThreadPage() {
 											: undefined
 									}
 								>
+									{/* The conversation's beginning, once all of it is read. */}
+									{isHome && !hasNextPage && !isError && <AgentIdentity />}
 									{isError && (
 										<QueryError
 											title={t(
@@ -363,7 +414,7 @@ export function ErrorBoundary() {
 								<Button
 									label={t("threads.newThread")}
 									variant="primary"
-									href="/"
+									href="/new"
 								/>
 							}
 						/>

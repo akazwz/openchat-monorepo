@@ -421,3 +421,72 @@
 - **检查**：`pnpm check`、各包类型检查、Web 与服务端单元测试通过（数字见交付说明）。
 - **未闭环**：2026-10-01 全量审查的 N1–N8、N11–N18 与文档漂移仍未处理；本次没有动它们。键盘 / 点击的远程注入、跨网络连接、权限首次申请弹窗未实测。
 - **上线**：用户授权后，Web 与 Worker 以 `pnpm run deploy` 发布到 https://app.heveta.com，版本 `e7bcde5d-6038-46f5-9e1a-9cbe9bb9dba9`。没有数据库迁移（`check-migrations.sh` 无待生成迁移）。上线后匿名检查：登录页返回 200，新主题与新文案生效，页面无控制台错误；登录后的页面由用户查看。官网（heveta.com）共用主题但未重新部署，仍是旧样式；Electron 客户端 0.3.0 已安装在本机，未分发。
+
+## 2026-10-03：主对话（产品形态第一步）
+
+范围：`threads` 表与 ThreadService、Web 的路由 / 侧栏 / 对话页、Electron 的“新对话”菜单。方案与调研见 `docs/agent-form.md`。已提交到 `heveta` 分支，未上线。
+
+- **做了什么**：每个账号一个主对话（`threads.main` + 部分唯一索引），`GetMainThread` 首次读时创建；`/` 显示主对话，`/new` 是新的旁支对话。主对话不能改名、删除，不在列表和搜索里。
+- **沿调用路径核对过的同类位置**：标题生成（主对话的 `titleSource` 是默认的 `user`，`titleFirstTurn` 不会为它调用模型）；模型的 `conversation_search` / `conversation_read`（主对话标题为空，改为显示“Main conversation”）；`thread` 事件（`upsertThread` 不把主对话放进侧栏列表）；删除对话后回到 `/`（即主对话）；电脑页出错时的“新对话”按钮与 Electron ⌘N（改到 `/new`）；直接打开 `/threads/<主对话 id>` 时侧栏选中“主对话”。
+- **验证**：集成测试新增一条（两个请求同时读只创建一个；不在列表里；改名、删除被拒），集成 59 项、服务端单元 97 项、Web 47 项通过；`pnpm check`、各包类型检查、`buf lint`、Web 与 Electron 构建通过。本地实测：`/` 发消息后地址不变、不进“最近”；`/new` 发消息后跳到 `/threads/<id>` 并生成标题；浅色、深色、手机宽度截图核对过。
+- **验证限制**：Electron 只重新构建，没有重新打包安装，⌘N 到 `/new` 没有在客户端里点过；`/threads/<主对话 id>` 的选中态、对话工具里的名称是按代码核对，没有单独实测。Swift 客户端没有动：它只加载应用地址，没有“新对话”之类的跳转，打开即主对话（按代码核对，未运行）。
+- **上线前提**：生产库需先执行迁移 `20261003065515_main_thread`，再部署；未执行，等用户同意。
+- **未闭环**：2026-10-01 全量审查的 N1–N8、N11–N18 仍未处理。
+
+## 2026-10-03：审批第一版（S1 的确认机制）
+
+范围：运行时（loop、checkpoint）、Run 的 driver / actor / 本地存储、`RunService.AnswerToolCall`、`ToolCall.consent`、`email_send`、Web 的审批卡片。设计与逐项验证见 `docs/approvals.md`。已提交到 `heveta` 分支，未上线；没有数据库迁移。
+
+- **S1 状态**：由“未做”变为“部分完成”。发邮件（`email_send`）在执行前等用户同意；带登录态的浏览器操作、用户 Mac 上的命令仍然直接执行（需要先有规则，否则问得太多，见 approvals.md 的表）。
+- **做法要点**：不新增 Run 状态，等待的是一次工具调用（Step PENDING + `consent`）；loop 以 WAITING 返回、driver 不写终态、actor 取消闹钟休眠；答复由 actor 以一次普通提交写进 checkpoint 和对话里的调用，再唤醒。
+- **沿调用路径核对过的位置**：停止（等待中、与等待同一次提交到达、执行收尾时到达）；答复与执行收尾的先后；同一答复重发；恢复时重发调用事件不丢 `consent`；归档到 PostgreSQL 的 Step 不带本地字段；部署时正在跑的 Run（checkpoint 版本未变）。
+- **验证**：loop 单元测试 2 条、集成测试 1 条（服务端单元 99、集成 60、Web 47 通过）；本地真实运行走了“出现卡片 → 刷新仍等待 → 不发送 → 模型说明未发送”。
+- **验证限制**：集成测试不模拟 Durable Object，actor 里的竞态处理（`cancel` 的二次唤醒、收尾时重新判断是否休眠）只按代码推演；真实环境的“同意后发信”、长时间等待后恢复、多设备同时答复没有实测。
+- **未闭环**：S1 的其余操作类别；2026-10-01 全量审查的 N1–N8、N11–N18。
+
+## 2026-10-06：通信协议与服务端实现审查（只读，未修复）
+
+范围：`proto/heveta/v1` 全部 14 个文件、11 个 RPC 服务及其实现、9 个非 RPC 端点（`/events`、`/upload`、`/files/*`、`/avatars/*`、`/screen`、`/terminal`、`/computer-file`、`/device/connect|remote|file`）、RPC 基础设施（`rpc/*`）、Run 的受理 / 提交 / 归档 / 事件发布链路、原生设备协议的两端一致性。对象是工作区（含未提交的 10-03 主对话、审批、日程）。Web 客户端只看了它如何使用错误码，不在范围内。
+
+### 确认问题
+
+| 编号 | 触发                                                                                                              | 影响                                                                                                                                                                | 证据与根因                                                                                                                                                                                                                                                                                                            | 级别 |
+| ---- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
+| Q1   | 浏览器调用 `ScheduleService` 的任一方法（活动页的列表、删除）                                                     | 请求到不了 Worker，静态资源层直接答 405；agent 的日程工具与 `ScheduleActor` 不经 HTTP，不受影响                                                                     | `cloudflare.config.ts:39-58` 的 `runWorkerFirst` 没有 `/heveta.v1.ScheduleService/*`。数组形式是静态路由：未列出的路径交给资源层，SPA 回退给出 `index.html` 意图，非 GET/HEAD 即 405（miniflare `assets.worker.js` 的 `canFetch` 与 588-593 行）。线上对照：已列出的路径答 401，未列出的答 405。根因：白名单手工维护 | 中   |
+| Q2   | 选了 Mac 的 Run 放置附件得到失败结果后，同一对话在同一台 Mac 上再发消息                                           | 之后每次工具调用前的 `prepare` 都拿到同一个失败结果，该对话的 Mac 工具约 7 天不可用                                                                                 | `devices/tools.ts:182-195` 的命令 ID 是 `upload:<fileId>`，不含 Run；`devices/connection.ts:189-194` 对已有 ID 原样返回存着的 job；job 结果保留 7 天（`:455-456`）。根因：为有副作用调用设计的“同 ID 不重放”被兼作“附件是否已放置”的记录，云电脑用的是 `files.placedAt`，失败会补放                                 | 中   |
+| Q3   | Mac 离线时的每次工具调用；同 ID 不同参数；主机或观看者接入时数据库查询失败                                        | 按 Cloudflare 文档，`blockConcurrencyWhile` 的回调抛错会终止并重置整个 Durable Object，同一对象上其他在途调用（等 Mac 重连的 `waitJob`、`ListDevices`）被一起中止   | `devices/connection.ts:187-203` 在门内 `throw new Error("Device is offline")`；`:107-175` 的准入查询没有 try/catch。`events/hub.ts:33-41` 为同一原因加了 try/catch。测试替身把门实现成普通队列，测不到。重置时已连 WebSocket 的去向未实测                                                                             | 中低 |
+| Q4   | 保存持续失败时调用 `ClearWorkspace(discard_unsaved=true)`                                                         | 文件已删除，RPC 却答 Internal；“当前快照”仍是清空前那份，容器在下次保存成功前停止则旧文件回来                                                                       | `sandbox/workspace.ts:267-281`：删除之后以一次 `#save` 收尾，`#save` 失败是抛出（`:477-481`）。restart 与 restore 的 discard 路径之后只是停机                                                                                                                                                                         | 低   |
+| Q5   | `/screen`、`/terminal` 的升级请求已过 Worker 准入，此时另一处退出登录，且关闭调用先于这条请求到达 `Computer`      | 这条连接以已撤销的会话留下，直到客户端自己关闭；窗口为毫秒级，未复现                                                                                                | `sandbox/computer-object.ts:257-268` 直接 `#connect`，没有像 `UserHub`、`DeviceConnection` 观看者分支那样在门内重查会话；`docs/sync.md:81` 写的“准入方式和事件通道一样”不完全成立                                                                                                                                     | 低   |
+| Q6   | `SendSignInCode` 的邮箱本地部分超过约 500 字节                                                                    | 公开入口答 500 并打错误日志，而不是 InvalidArgument；受地址限流约束，不泄露信息                                                                                     | `auth/service.ts:56-61` 只做格式校验，无长度上限；`auth/invitations.ts:21` 把它当 KV 键（上限 512 字节）                                                                                                                                                                                                              | 低   |
+| Q7   | 重放一个已结束 Run 的 `StartTurn` / `RetryTurn`                                                                   | 归档片段读两遍，第一遍在受理事务内、持有 Run 行的共享锁                                                                                                             | `runs/commands.ts:271` 的 `snapshotFromRun` 结果被 `turns/service.ts:49-51` 丢弃后重读                                                                                                                                                                                                                                | 低   |
+
+契约与注释漂移（新增）：`auth.proto:11-13` 称“向任意合法地址发码”，实现对未受邀地址答 `PERMISSION_DENIED` + `NOT_INVITED`；`computer.proto:10-11` 与 `sandbox/connections.ts:6-8` 仍称终端是 Sandbox SDK 的 PTY 协议，实现是自有协议（`docs/sandbox.md` 已更新）；`rpc/router.ts:24-26` 把防伪造归因于 `Connect-Protocol-Version` 一个请求头，实际靠非简单 Content-Type 的预检、`SameSite=Strict` cookie、`x-heveta-user` 三者叠加（gRPC 与 gRPC-web 默认也开着，该选项管不到）；`docs/agent-form.md:112` 仍写日程“未实现”；`docs/macos.md:44` 写“当前 Run 的附件”，实现是该对话全部附件。
+
+### 待验证疑点
+
+- 读取路径的查询次数：定稿回复每条 2 次片段元数据查询，再加每个带正文的 part 一次，按 part 顺序执行（`threads/content-store.ts`）；`ListMessages` 一页 50 条并行跑在 5 个连接上（`threads/service.ts:259-275`），`GetRun`、终态发布同路径。工具调用多的对话一页是几百到上千次往返。按代码计数，未实测耗时。
+- 远程控制锁可能被自己的旧会话占住约两小时（`devices/connection.ts:258-265` 等）：释放依赖服务端先 `close()` 后 `webSocketClose` 仍被回调，workerd 行为未实测。
+- 服务端没有主机心跳超时：ping 由自动应答处理，Mac 合盖不发 FIN 时 `online` 保持多久取决于 Cloudflare 何时判定连接已死。
+- `host()` 依赖旧 socket 被 `close(4000)` 后 `readyState` 立即不再是 OPEN（`devices/connection.ts:62-66`）。
+- 含 U+0000 的 ID、`challenge`、游标、上传文件名直接进 text 参数，应得 22021 并映射为 Internal；`ListComputerFiles` 指向文件、`GET /computer-file` 指向目录或空路径也答 500（子审查报告，主线程未逐条复核）。
+
+### 设计取舍观察
+
+- Run 的 actor 在输入校验之前就布防（`turns/service.ts:28-33`）：每个被拒或重放的提交都留下一个 60 秒后醒来、开一次数据库连接再自毁的对象。
+- 同一网络在冷却期内对同一邮箱再发码，拿到的是同一个 challenge（`auth/service.ts:134-148`），知道邮箱的同网络用户可以耗掉它的 5 次猜测；`NOT_INVITED` 让外部能区分“有账号或已受邀”与“都不是”。
+- 日程没有变更事件，活动页靠挂载和聚焦时补读。
+- `/workspace` 的限制是词法检查，其中指向外部的符号链接可被读写（容器整个属于该用户，不算越权）；文件列表不显示符号链接。
+- `StartRemoteDesktop` 先取 TURN 凭证再问设备状态，TURN 不可用时离线设备得到 Unavailable 而不是 `DEVICE_OFFLINE`。
+- `ListMessages` 遇到读不到的活动 Run 整页失败，不返回缺正文的消息（run-storage.md 的约定）。
+
+### 已知项复核
+
+仍存在：N1（`runtime/responses/output.ts:140-144`）、N4、N8、N14（`local-storage.ts:179-197` 初始化时固定 `cancelRequested: false`）、N15；N12 范围扩大：`DeleteEmail` 重复删除答 NotFound，`DeleteSchedule` 幂等，五个 Delete 两种语义；文档漂移中的 `EventService` 残留、`file.proto` 服务注释、保留字段、`docs/email.md` 漏 `MarkEmailRead`、`turn.proto` 的“未命名对话”。
+
+### 已核对无误
+
+受理的幂等、撤回与重放（请求咨询锁、`requestHash`、对话行锁、先布防后提交）；重试只能针对最新一轮的最新尝试；Run revision 的连续性（最后一次变化为 R，终态快照为 R+1，终态发布失败会重试）；活动快照按固定 commitSeq 读取，追加不会混入；取消与同意应答的归属检查和重复应答；所有读写按 `userId` 过滤，ID 列均为 text，非法 ID 得到 NotFound；分页游标带作用域；拦截器顺序与错误映射不外泄内部信息；事件通道的 Origin、会话与门内复查；protobuf 编解码；生成代码与 proto 一致（重新生成比对无差异），`buf lint` 与相对 HEAD 的 `buf breaking` 通过。设备协议的消息字段、关闭码、大小上限在服务端、Electron、Swift 三端一致。
+
+### 验证限制
+
+没有运行测试，也没有启动本地服务。唯一的运行证据是对线上发的三个匿名空请求（Q1）。Q2–Q5 由子审查发现、主线程回到代码核对过机制，未运行复现；Q3 的后果来自 Cloudflare 文档。Durable Object 的重置、WebSocket 关闭回调、合盖断网等平台行为都未实测。未看的部分：agent 工具本身（`sandbox/tools.ts`、`mail/tools.ts`、`memories/tools.ts`）、运行时循环、Web 客户端的事件合并。

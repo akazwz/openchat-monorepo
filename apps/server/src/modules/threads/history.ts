@@ -40,6 +40,11 @@ const snippetAfter = 160;
 const readMessageChars = 4_000;
 const readTotalChars = 40_000;
 
+// What the model is told a conversation is called: the main one has no title
+// (it shows as the product's name in the app).
+const conversationTitle = (thread: { title: string; main: boolean }) =>
+	thread.main ? "Main conversation" : thread.title;
+
 interface ConversationHit {
 	id: string;
 	title: string;
@@ -126,6 +131,7 @@ export async function searchConversations(
 			score: sql<number>`(${score})::int`,
 			threadId: messages.threadId,
 			title: threads.title,
+			main: threads.main,
 			updatedAt: threads.updatedAt,
 			role: messages.role,
 			createdAt: messages.createdAt,
@@ -143,6 +149,7 @@ export async function searchConversations(
 			runId: runs.id,
 			threadId: messages.threadId,
 			title: threads.title,
+			main: threads.main,
 			updatedAt: threads.updatedAt,
 			role: messages.role,
 			createdAt: messages.createdAt,
@@ -189,7 +196,7 @@ export async function searchConversations(
 			if (hits.size >= shownConversations) continue;
 			hit = {
 				id: row.threadId,
-				title: row.title,
+				title: conversationTitle(row),
 				updatedAt: row.updatedAt,
 				snippets: [],
 			};
@@ -316,7 +323,7 @@ export async function readConversation(
 	}
 	return {
 		id: thread.id,
-		title: thread.title,
+		title: conversationTitle(thread),
 		total: withText.length,
 		messages: kept,
 		...(index < withText.length ? { next: index } : {}),

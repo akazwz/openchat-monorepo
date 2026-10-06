@@ -114,6 +114,7 @@ export default defineConfig({
 				storage: "sqlite",
 			}),
 			DeviceConnection: exports.durableObject({ storage: "sqlite" }),
+			ScheduleActor: exports.durableObject({ storage: "sqlite" }),
 			Computer: exports.durableObject({
 				storage: "sqlite",
 				container: computer,

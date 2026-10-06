@@ -9,6 +9,7 @@ import { registerMemories } from "@/modules/memories/rpc";
 import { registerModels } from "@/modules/models/rpc";
 import { registerRuns } from "@/modules/runs/rpc";
 import { registerComputer } from "@/modules/sandbox/rpc";
+import { registerSchedules } from "@/modules/schedules/rpc";
 import { registerThreads } from "@/modules/threads/rpc";
 import { registerTurns } from "@/modules/turns/rpc";
 
@@ -40,5 +41,6 @@ export const handler = createWorkerHandler<Env>({
 		registerComputer(router);
 		registerMail(router);
 		registerDevices(router);
+		registerSchedules(router);
 	},
 });

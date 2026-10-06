@@ -30,6 +30,7 @@ import { fileSize } from "~/features/files/kinds";
 import { saveFile } from "~/features/files/save-file";
 import { useT } from "~/i18n/use-t";
 
+import { ComputerTabs } from "./computer-tabs";
 import type { FilePreviewContent } from "./file-preview";
 import {
 	previewKind,
@@ -145,7 +146,8 @@ export function ComputerFiles({
 			<Layout
 				header={
 					<AppPageHeader
-						title={t("computer.files")}
+						title={t("computer.title")}
+						tabs={<ComputerTabs view="files" />}
 						detail={
 							<ScrollableArea axis="inline" label={t("computer.folder")}>
 								<Breadcrumbs label={t("computer.folder")} variant="supporting">

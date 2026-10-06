@@ -21,6 +21,13 @@ export function registerThreads(router: ConnectRouter) {
 				),
 			};
 		},
+		async getMainThread(_req, ctx) {
+			return {
+				thread: threadResource(
+					await service.getMainThread(getDB(ctx), getAuthInfo(ctx).userId),
+				),
+			};
+		},
 		async listThreads(req, ctx) {
 			const page = await service.listThreads(
 				getDB(ctx),

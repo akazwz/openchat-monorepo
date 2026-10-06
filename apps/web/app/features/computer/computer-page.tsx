@@ -10,32 +10,32 @@ import { AppPageHeader } from "~/components/app-page-header";
 import { useT } from "~/i18n/use-t";
 
 import { ComputerFiles } from "./computer-files";
+import { ComputerTabs, type ComputerView } from "./computer-tabs";
 import { useWorkspaceFiles } from "./workspace-files";
 
 // Heavy live clients load only with the view the person opens.
 const ComputerScreen = lazy(() => import("./computer-screen"));
 const ComputerTerminal = lazy(() => import("./computer-terminal"));
 
-type ComputerView = "screen" | "terminal" | "files";
-const titles = {
-	screen: "computer.title",
-	terminal: "computer.terminal",
-	files: "computer.files",
-} as const;
-
-// Each route shows one view of the same computer. Navigating away unmounts
-// the live client and releases its connection, without stopping its work.
+// Each route shows one view of the same computer (computer-tabs.tsx).
+// Navigating away unmounts the live client and releases its connection,
+// without stopping its work.
 export default function ComputerPage({ view }: { view: ComputerView }) {
 	const t = useT();
 	const files = useWorkspaceFiles();
-	const title = t(titles[view]);
+	const title = t("computer.title");
 	return (
 		<>
 			<title>{pageTitle(title)}</title>
 			<Suspense
 				fallback={
 					<Layout
-						header={<AppPageHeader title={title} />}
+						header={
+							<AppPageHeader
+								title={title}
+								tabs={<ComputerTabs view={view} />}
+							/>
+						}
 						content={
 							<Center axis="both" height="100%">
 								<Spinner
@@ -75,7 +75,7 @@ export function ErrorBoundary() {
 							actions={
 								<Button
 									label={t("threads.newThread")}
-									href="/"
+									href="/new"
 									variant="primary"
 								/>
 							}

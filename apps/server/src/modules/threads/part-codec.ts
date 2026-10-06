@@ -6,10 +6,15 @@ import {
 	MessagePartSchema,
 	MessagePhase,
 	type MessagePart as ProtoPart,
+	ToolConsent,
 	ToolSurface,
 } from "@/gen/heveta/v1/thread_pb";
 import { fileResource } from "@/modules/files/rpc-codec";
-import { type ToolSurface as Surface, toolArguments } from "@/runtime/tools";
+import {
+	type Consent,
+	type ToolSurface as Surface,
+	toolArguments,
+} from "@/runtime/tools";
 
 import { listedOutputChars } from "./content";
 import type { MessagePart } from "./types";
@@ -19,6 +24,11 @@ const surfaces: Record<Surface, ToolSurface> = {
 	computer: ToolSurface.COMPUTER,
 	browser: ToolSurface.BROWSER,
 	delivery: ToolSurface.DELIVERY,
+};
+const consents: Record<Consent, ToolConsent> = {
+	requested: ToolConsent.REQUESTED,
+	granted: ToolConsent.GRANTED,
+	refused: ToolConsent.REFUSED,
 };
 
 // A listed message's tool outputs longer than this, as JSON, are left out
@@ -75,6 +85,9 @@ export function partToProto(
 						surface: content.value.surface
 							? surfaces[content.value.surface]
 							: ToolSurface.UNSPECIFIED,
+						consent: content.value.consent
+							? consents[content.value.consent]
+							: ToolConsent.UNSPECIFIED,
 					},
 				},
 			});

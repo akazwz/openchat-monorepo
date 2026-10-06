@@ -35,7 +35,8 @@ const minimumSize = { width: 900, height: 600 };
 // What the window shows: the web app once it has loaded, the client's own
 // panel until then and whenever the app cannot be shown.
 type Status = "loading" | "ready" | "failed" | "crashed";
-type AppPath = "/" | "/settings";
+// Where the menus lead: a new side conversation, and settings.
+type AppPath = "/new" | "/settings";
 type PendingWork = "drafts" | "upload";
 
 export function openExternal(url: string) {

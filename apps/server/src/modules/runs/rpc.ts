@@ -5,7 +5,7 @@ import { getAuthInfo } from "@/rpc/context";
 import { getDB } from "@/rpc/database";
 
 import { runLookup, runSnapshotResource } from "./rpc-codec";
-import { cancelRun } from "./service";
+import { answerToolCall, cancelRun } from "./service";
 import { getRunSnapshot } from "./store";
 
 export function registerRuns(router: ConnectRouter) {
@@ -23,6 +23,16 @@ export function registerRuns(router: ConnectRouter) {
 				getDB(ctx),
 				getAuthInfo(ctx).userId,
 				runLookup(req),
+			);
+			return { snapshot: runSnapshotResource(snapshot) };
+		},
+		async answerToolCall(req, ctx) {
+			const snapshot = await answerToolCall(
+				getDB(ctx),
+				getAuthInfo(ctx).userId,
+				req.runId,
+				req.toolCallId,
+				req.approved,
 			);
 			return { snapshot: runSnapshotResource(snapshot) };
 		},

@@ -7,9 +7,13 @@ import "google/protobuf/field_mask.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
-// Threads are created by TurnService.StartTurn with its first input.
+// A user has one main thread, their continuing conversation with the agent,
+// made the first time it is asked for. Every other thread is a side
+// conversation, created by TurnService.StartTurn with its first input.
 service ThreadService {
   rpc GetThread(GetThreadRequest) returns (GetThreadResponse);
+  rpc GetMainThread(GetMainThreadRequest) returns (GetMainThreadResponse);
+  // The side conversations; the main thread is not among them.
   rpc ListThreads(ListThreadsRequest) returns (ListThreadsResponse);
   rpc UpdateThread(UpdateThreadRequest) returns (UpdateThreadResponse);
   rpc DeleteThread(DeleteThreadRequest) returns (DeleteThreadResponse);
@@ -31,6 +35,8 @@ message Thread {
   bool running = 4;
   // Monotonic title version. Activity/run state is ordered independently.
   uint32 revision = 5;
+  // The user's main thread. It has no title and cannot be renamed or deleted.
+  bool main = 6;
 }
 enum MessageRole {
   MESSAGE_ROLE_UNSPECIFIED = 0;
@@ -73,11 +79,23 @@ enum ToolSurface {
   // reply.
   TOOL_SURFACE_DELIVERY = 4;
 }
+// Where a call that takes effect outside (an email sent) stands with the
+// person: it does not run until they approve it (RunService.AnswerToolCall).
+enum ToolConsent {
+  // The call needs no consent.
+  TOOL_CONSENT_UNSPECIFIED = 0;
+  // Asked, and waiting for the answer. The run stays active meanwhile.
+  TOOL_CONSENT_REQUESTED = 1;
+  TOOL_CONSENT_GRANTED = 2;
+  // The call was not carried out.
+  TOOL_CONSENT_REFUSED = 3;
+}
 message ToolCall {
   string id = 1;
   string name = 2;
   google.protobuf.Struct arguments = 3;
   ToolSurface surface = 4;
+  ToolConsent consent = 5;
 }
 message ToolResult {
   string tool_call_id = 1;
@@ -128,11 +146,18 @@ message Message {
   // The run's revision this copy reflects: a run change applies to it when
   // it is the next revision, and a copy with an older one is replaced.
   uint32 run_revision = 12;
+  // A user message the agent's schedule gave (ScheduleService), not one the
+  // person wrote.
+  bool scheduled = 13;
 }
 message GetThreadRequest {
   string thread_id = 1;
 }
 message GetThreadResponse {
+  Thread thread = 1;
+}
+message GetMainThreadRequest {}
+message GetMainThreadResponse {
   Thread thread = 1;
 }
 message ListThreadsRequest {

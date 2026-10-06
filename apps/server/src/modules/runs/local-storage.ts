@@ -22,10 +22,11 @@ import {
 	type PartDescriptor,
 } from "@/modules/threads/content";
 import { decodeParts, type StoredMessagePart } from "@/modules/threads/storage";
-import type { Message } from "@/modules/threads/types";
+import type { Message, MessagePart } from "@/modules/threads/types";
 import type { LoopCheckpoint, StepUpdate } from "@/runtime/checkpoint";
 import { modelFileId, modelFileParts } from "@/runtime/responses/model-files";
 import type { ModelInput } from "@/runtime/responses/types";
+import type { Consent } from "@/runtime/tools";
 
 import {
 	finalizeArchive,
@@ -83,6 +84,8 @@ interface PreparedBatch {
 }
 interface LocalStep extends StepRecord {
 	callId?: string;
+	// A call the person was asked about, and their answer (docs/approvals.md).
+	consent?: Consent;
 }
 interface ChangePosition {
 	type: "part" | "textDelta";
@@ -521,6 +524,9 @@ export class LocalRunStorage {
 							? null
 							: at,
 					...(callId ? { callId } : {}),
+					...((update.consent ?? current?.consent)
+						? { consent: update.consent ?? current?.consent }
+						: {}),
 				};
 				this.storage.sql.exec(
 					"INSERT INTO batch_steps(batch_id,idx,value) VALUES(?,?,?)",
@@ -839,6 +845,7 @@ export class LocalRunStorage {
 				name: call.name,
 				arguments: call.arguments,
 				started: step.startedAt !== null,
+				...(step.consent ? { consent: step.consent } : {}),
 			};
 		});
 		return {
@@ -867,9 +874,37 @@ export class LocalRunStorage {
 		return this.#rows<{ value: string }>(
 			"SELECT value FROM local_steps ORDER BY idx",
 		).map(({ value }) => {
-			const { callId: _callId, ...step } = stepDates(JSON.parse(value));
+			const {
+				callId: _callId,
+				consent: _consent,
+				...step
+			} = stepDates(JSON.parse(value));
 			return step;
 		});
+	}
+	// Where the person's consent to a call stands; undefined for a call
+	// that was never asked about.
+	consent(callId: string): Consent | undefined {
+		const [row] = this.#rows<{ value: string }>(
+			"SELECT value FROM local_steps WHERE json_extract(value,'$.callId')=?",
+			callId,
+		);
+		return row ? (JSON.parse(row.value) as LocalStep).consent : undefined;
+	}
+	// A pending call still waits for the person's answer.
+	awaitsConsent() {
+		return (
+			this.#rows(
+				"SELECT 1 FROM local_steps WHERE json_extract(value,'$.status')=? AND json_extract(value,'$.consent')=? LIMIT 1",
+				StepStatus.PENDING,
+				"requested" satisfies Consent,
+			).length > 0
+		);
+	}
+	// A committed part as it stands.
+	part(id: string): MessagePart | undefined {
+		const descriptor = this.#descriptor(id);
+		return descriptor && joinPart(descriptor, this.#body(descriptor), false);
 	}
 	*textChunks(at = this.state()!.commitSeq): Generator<string> {
 		let after = -1;

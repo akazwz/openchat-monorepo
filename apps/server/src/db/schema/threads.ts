@@ -1,10 +1,13 @@
+import { sql } from "drizzle-orm";
 import {
+	boolean,
 	index,
 	integer,
 	snakeCase,
 	text,
 	timestamp,
 	unique,
+	uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { v7 as uuidv7 } from "uuid";
 
@@ -39,6 +42,10 @@ export const threads = snakeCase.table(
 			.notNull()
 			.references(() => users.id),
 		title: text().notNull().default(""),
+		// The user's one continuing conversation with the agent, the app's home
+		// (docs/agent-form.md). It is there from their first visit, has no
+		// title, and is never deleted; every other conversation is a side one.
+		main: boolean().notNull().default(false),
 		// Title changes; activity and run progress have their own ordering.
 		revision: integer().notNull().default(1),
 		// Where the title came from: the first message ("input"), the model
@@ -64,6 +71,10 @@ export const threads = snakeCase.table(
 		// The list: a user's conversations, the most recently active first
 		// (read backwards; ascending, it matches ORDER BY … DESC exactly).
 		index("threads_user_active_idx").on(t.userId, t.updatedAt, t.id),
+		// A user has one main conversation.
+		uniqueIndex("threads_user_main_idx")
+			.on(t.userId)
+			.where(sql`${t.main}`),
 	],
 );
 export type ThreadRecord = typeof threads.$inferSelect;

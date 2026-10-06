@@ -16,7 +16,7 @@ import type { JsonObject, Message as Message$1 } from "@bufbuild/protobuf";
  * Describes the file heveta/v1/thread.proto.
  */
 export const file_heveta_v1_thread: GenFile = /*@__PURE__*/
-  fileDesc("ChZoZXZldGEvdjEvdGhyZWFkLnByb3RvEgloZXZldGEudjEidwoGVGhyZWFkEgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEi8KC2FjdGl2ZV90aW1lGAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIPCgdydW5uaW5nGAQgASgIEhAKCHJldmlzaW9uGAUgASgNIq4BChVBc3Npc3RhbnRUZXh0TWV0YWRhdGESEgoKbWVzc2FnZV9pZBgBIAEoCRIVCg1jb250ZW50X2luZGV4GAIgASgNEiYKBXBoYXNlGAMgASgOMhcuaGV2ZXRhLnYxLk1lc3NhZ2VQaGFzZRIPCgdyZWZ1c2FsGAQgASgIEjEKBnN0YXR1cxgFIAEoDjIhLmhldmV0YS52MS5Bc3Npc3RhbnRNZXNzYWdlU3RhdHVzInkKCFRvb2xDYWxsEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSKgoJYXJndW1lbnRzGAMgASgLMhcuZ29vZ2xlLnByb3RvYnVmLlN0cnVjdBInCgdzdXJmYWNlGAQgASgOMhYuaGV2ZXRhLnYxLlRvb2xTdXJmYWNlIqMBCgpUb29sUmVzdWx0EhQKDHRvb2xfY2FsbF9pZBgBIAEoCRIMCgRuYW1lGAIgASgJEiYKBm91dHB1dBgDIAEoCzIWLmdvb2dsZS5wcm90b2J1Zi5WYWx1ZRIQCghpc19lcnJvchgEIAEoCBIfCgZpbWFnZXMYBSADKAsyDy5oZXZldGEudjEuRmlsZRIWCg5vdXRwdXRfb21pdHRlZBgGIAEoCCKSAgoLTWVzc2FnZVBhcnQSCgoCaWQYASABKAkSDgoEdGV4dBgCIAEoCUgAEh8KBGZpbGUYAyABKAsyDy5oZXZldGEudjEuRmlsZUgAEigKCXRvb2xfY2FsbBgEIAEoCzITLmhldmV0YS52MS5Ub29sQ2FsbEgAEiwKC3Rvb2xfcmVzdWx0GAUgASgLMhUuaGV2ZXRhLnYxLlRvb2xSZXN1bHRIABIpCglyZWFzb25pbmcYCCABKAsyFC5oZXZldGEudjEuUmVhc29uaW5nSAASOAoOYXNzaXN0YW50X3RleHQYBiABKAsyIC5oZXZldGEudjEuQXNzaXN0YW50VGV4dE1ldGFkYXRhQgkKB2NvbnRlbnQiGQoJUmVhc29uaW5nEgwKBHRleHQYASABKAki6wIKB01lc3NhZ2USCgoCaWQYASABKAkSEQoJdGhyZWFkX2lkGAIgASgJEg8KB3R1cm5faWQYAyABKAkSDgoGcnVuX2lkGAQgASgJEiQKBHJvbGUYBSABKA4yFi5oZXZldGEudjEuTWVzc2FnZVJvbGUSJQoFcGFydHMYBiADKAsyFi5oZXZldGEudjEuTWVzc2FnZVBhcnQSLwoLY3JlYXRlX3RpbWUYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC3VwZGF0ZV90aW1lGAggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIoCgpydW5fc3RhdHVzGAkgASgOMhQuaGV2ZXRhLnYxLlJ1blN0YXR1cxITCgtydW5fYXR0ZW1wdBgKIAEoDRIcChRydW5fY2FuY2VsX3JlcXVlc3RlZBgLIAEoCBIUCgxydW5fcmV2aXNpb24YDCABKA0iJQoQR2V0VGhyZWFkUmVxdWVzdBIRCgl0aHJlYWRfaWQYASABKAkiNgoRR2V0VGhyZWFkUmVzcG9uc2USIQoGdGhyZWFkGAEgASgLMhEuaGV2ZXRhLnYxLlRocmVhZCJZChJMaXN0VGhyZWFkc1JlcXVlc3QSEQoJcGFnZV9zaXplGAEgASgFEhIKCnBhZ2VfdG9rZW4YAiABKAkSEgoFcXVlcnkYAyABKAlIAIgBAUIICgZfcXVlcnkiUgoTTGlzdFRocmVhZHNSZXNwb25zZRIiCgd0aHJlYWRzGAEgAygLMhEuaGV2ZXRhLnYxLlRocmVhZBIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAkiaQoTVXBkYXRlVGhyZWFkUmVxdWVzdBIhCgZ0aHJlYWQYASABKAsyES5oZXZldGEudjEuVGhyZWFkEi8KC3VwZGF0ZV9tYXNrGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLkZpZWxkTWFzayI5ChRVcGRhdGVUaHJlYWRSZXNwb25zZRIhCgZ0aHJlYWQYASABKAsyES5oZXZldGEudjEuVGhyZWFkIigKE0RlbGV0ZVRocmVhZFJlcXVlc3QSEQoJdGhyZWFkX2lkGAEgASgJIhYKFERlbGV0ZVRocmVhZFJlc3BvbnNlIk8KE0xpc3RNZXNzYWdlc1JlcXVlc3QSEQoJdGhyZWFkX2lkGAEgASgJEhEKCXBhZ2Vfc2l6ZRgCIAEoBRISCgpwYWdlX3Rva2VuGAMgASgJIlUKFExpc3RNZXNzYWdlc1Jlc3BvbnNlEiQKCG1lc3NhZ2VzGAEgAygLMhIuaGV2ZXRhLnYxLk1lc3NhZ2USFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIkAKFEdldFRvb2xSZXN1bHRSZXF1ZXN0EhIKCm1lc3NhZ2VfaWQYASABKAkSFAoMdG9vbF9jYWxsX2lkGAIgASgJIj4KFUdldFRvb2xSZXN1bHRSZXNwb25zZRIlCgZyZXN1bHQYASABKAsyFS5oZXZldGEudjEuVG9vbFJlc3VsdCpeCgtNZXNzYWdlUm9sZRIcChhNRVNTQUdFX1JPTEVfVU5TUEVDSUZJRUQQABIVChFNRVNTQUdFX1JPTEVfVVNFUhABEhoKFk1FU1NBR0VfUk9MRV9BU1NJU1RBTlQQAiprCgxNZXNzYWdlUGhhc2USHQoZTUVTU0FHRV9QSEFTRV9VTlNQRUNJRklFRBAAEhwKGE1FU1NBR0VfUEhBU0VfQ09NTUVOVEFSWRABEh4KGk1FU1NBR0VfUEhBU0VfRklOQUxfQU5TV0VSEAIqvQEKFkFzc2lzdGFudE1lc3NhZ2VTdGF0dXMSKAokQVNTSVNUQU5UX01FU1NBR0VfU1RBVFVTX1VOU1BFQ0lGSUVEEAASKAokQVNTSVNUQU5UX01FU1NBR0VfU1RBVFVTX0lOX1BST0dSRVNTEAESJgoiQVNTSVNUQU5UX01FU1NBR0VfU1RBVFVTX0NPTVBMRVRFRBACEicKI0FTU0lTVEFOVF9NRVNTQUdFX1NUQVRVU19JTkNPTVBMRVRFEAMqlQEKC1Rvb2xTdXJmYWNlEhwKGFRPT0xfU1VSRkFDRV9VTlNQRUNJRklFRBAAEhgKFFRPT0xfU1VSRkFDRV9TRVJWSUNFEAESGQoVVE9PTF9TVVJGQUNFX0NPTVBVVEVSEAISGAoUVE9PTF9TVVJGQUNFX0JST1dTRVIQAxIZChVUT09MX1NVUkZBQ0VfREVMSVZFUlkQBDLsAwoNVGhyZWFkU2VydmljZRJGCglHZXRUaHJlYWQSGy5oZXZldGEudjEuR2V0VGhyZWFkUmVxdWVzdBocLmhldmV0YS52MS5HZXRUaHJlYWRSZXNwb25zZRJMCgtMaXN0VGhyZWFkcxIdLmhldmV0YS52MS5MaXN0VGhyZWFkc1JlcXVlc3QaHi5oZXZldGEudjEuTGlzdFRocmVhZHNSZXNwb25zZRJPCgxVcGRhdGVUaHJlYWQSHi5oZXZldGEudjEuVXBkYXRlVGhyZWFkUmVxdWVzdBofLmhldmV0YS52MS5VcGRhdGVUaHJlYWRSZXNwb25zZRJPCgxEZWxldGVUaHJlYWQSHi5oZXZldGEudjEuRGVsZXRlVGhyZWFkUmVxdWVzdBofLmhldmV0YS52MS5EZWxldGVUaHJlYWRSZXNwb25zZRJPCgxMaXN0TWVzc2FnZXMSHi5oZXZldGEudjEuTGlzdE1lc3NhZ2VzUmVxdWVzdBofLmhldmV0YS52MS5MaXN0TWVzc2FnZXNSZXNwb25zZRJSCg1HZXRUb29sUmVzdWx0Eh8uaGV2ZXRhLnYxLkdldFRvb2xSZXN1bHRSZXF1ZXN0GiAuaGV2ZXRhLnYxLkdldFRvb2xSZXN1bHRSZXNwb25zZWIGcHJvdG8z", [file_heveta_v1_file, file_heveta_v1_run_status, file_google_protobuf_field_mask, file_google_protobuf_struct, file_google_protobuf_timestamp]);
+  fileDesc("ChZoZXZldGEvdjEvdGhyZWFkLnByb3RvEgloZXZldGEudjEihQEKBlRocmVhZBIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRIvCgthY3RpdmVfdGltZRgDIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDwoHcnVubmluZxgEIAEoCBIQCghyZXZpc2lvbhgFIAEoDRIMCgRtYWluGAYgASgIIq4BChVBc3Npc3RhbnRUZXh0TWV0YWRhdGESEgoKbWVzc2FnZV9pZBgBIAEoCRIVCg1jb250ZW50X2luZGV4GAIgASgNEiYKBXBoYXNlGAMgASgOMhcuaGV2ZXRhLnYxLk1lc3NhZ2VQaGFzZRIPCgdyZWZ1c2FsGAQgASgIEjEKBnN0YXR1cxgFIAEoDjIhLmhldmV0YS52MS5Bc3Npc3RhbnRNZXNzYWdlU3RhdHVzIqIBCghUb29sQ2FsbBIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEioKCWFyZ3VtZW50cxgDIAEoCzIXLmdvb2dsZS5wcm90b2J1Zi5TdHJ1Y3QSJwoHc3VyZmFjZRgEIAEoDjIWLmhldmV0YS52MS5Ub29sU3VyZmFjZRInCgdjb25zZW50GAUgASgOMhYuaGV2ZXRhLnYxLlRvb2xDb25zZW50IqMBCgpUb29sUmVzdWx0EhQKDHRvb2xfY2FsbF9pZBgBIAEoCRIMCgRuYW1lGAIgASgJEiYKBm91dHB1dBgDIAEoCzIWLmdvb2dsZS5wcm90b2J1Zi5WYWx1ZRIQCghpc19lcnJvchgEIAEoCBIfCgZpbWFnZXMYBSADKAsyDy5oZXZldGEudjEuRmlsZRIWCg5vdXRwdXRfb21pdHRlZBgGIAEoCCKSAgoLTWVzc2FnZVBhcnQSCgoCaWQYASABKAkSDgoEdGV4dBgCIAEoCUgAEh8KBGZpbGUYAyABKAsyDy5oZXZldGEudjEuRmlsZUgAEigKCXRvb2xfY2FsbBgEIAEoCzITLmhldmV0YS52MS5Ub29sQ2FsbEgAEiwKC3Rvb2xfcmVzdWx0GAUgASgLMhUuaGV2ZXRhLnYxLlRvb2xSZXN1bHRIABIpCglyZWFzb25pbmcYCCABKAsyFC5oZXZldGEudjEuUmVhc29uaW5nSAASOAoOYXNzaXN0YW50X3RleHQYBiABKAsyIC5oZXZldGEudjEuQXNzaXN0YW50VGV4dE1ldGFkYXRhQgkKB2NvbnRlbnQiGQoJUmVhc29uaW5nEgwKBHRleHQYASABKAki/gIKB01lc3NhZ2USCgoCaWQYASABKAkSEQoJdGhyZWFkX2lkGAIgASgJEg8KB3R1cm5faWQYAyABKAkSDgoGcnVuX2lkGAQgASgJEiQKBHJvbGUYBSABKA4yFi5oZXZldGEudjEuTWVzc2FnZVJvbGUSJQoFcGFydHMYBiADKAsyFi5oZXZldGEudjEuTWVzc2FnZVBhcnQSLwoLY3JlYXRlX3RpbWUYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC3VwZGF0ZV90aW1lGAggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIoCgpydW5fc3RhdHVzGAkgASgOMhQuaGV2ZXRhLnYxLlJ1blN0YXR1cxITCgtydW5fYXR0ZW1wdBgKIAEoDRIcChRydW5fY2FuY2VsX3JlcXVlc3RlZBgLIAEoCBIUCgxydW5fcmV2aXNpb24YDCABKA0SEQoJc2NoZWR1bGVkGA0gASgIIiUKEEdldFRocmVhZFJlcXVlc3QSEQoJdGhyZWFkX2lkGAEgASgJIjYKEUdldFRocmVhZFJlc3BvbnNlEiEKBnRocmVhZBgBIAEoCzIRLmhldmV0YS52MS5UaHJlYWQiFgoUR2V0TWFpblRocmVhZFJlcXVlc3QiOgoVR2V0TWFpblRocmVhZFJlc3BvbnNlEiEKBnRocmVhZBgBIAEoCzIRLmhldmV0YS52MS5UaHJlYWQiWQoSTGlzdFRocmVhZHNSZXF1ZXN0EhEKCXBhZ2Vfc2l6ZRgBIAEoBRISCgpwYWdlX3Rva2VuGAIgASgJEhIKBXF1ZXJ5GAMgASgJSACIAQFCCAoGX3F1ZXJ5IlIKE0xpc3RUaHJlYWRzUmVzcG9uc2USIgoHdGhyZWFkcxgBIAMoCzIRLmhldmV0YS52MS5UaHJlYWQSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJImkKE1VwZGF0ZVRocmVhZFJlcXVlc3QSIQoGdGhyZWFkGAEgASgLMhEuaGV2ZXRhLnYxLlRocmVhZBIvCgt1cGRhdGVfbWFzaxgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5GaWVsZE1hc2siOQoUVXBkYXRlVGhyZWFkUmVzcG9uc2USIQoGdGhyZWFkGAEgASgLMhEuaGV2ZXRhLnYxLlRocmVhZCIoChNEZWxldGVUaHJlYWRSZXF1ZXN0EhEKCXRocmVhZF9pZBgBIAEoCSIWChREZWxldGVUaHJlYWRSZXNwb25zZSJPChNMaXN0TWVzc2FnZXNSZXF1ZXN0EhEKCXRocmVhZF9pZBgBIAEoCRIRCglwYWdlX3NpemUYAiABKAUSEgoKcGFnZV90b2tlbhgDIAEoCSJVChRMaXN0TWVzc2FnZXNSZXNwb25zZRIkCghtZXNzYWdlcxgBIAMoCzISLmhldmV0YS52MS5NZXNzYWdlEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSJAChRHZXRUb29sUmVzdWx0UmVxdWVzdBISCgptZXNzYWdlX2lkGAEgASgJEhQKDHRvb2xfY2FsbF9pZBgCIAEoCSI+ChVHZXRUb29sUmVzdWx0UmVzcG9uc2USJQoGcmVzdWx0GAEgASgLMhUuaGV2ZXRhLnYxLlRvb2xSZXN1bHQqXgoLTWVzc2FnZVJvbGUSHAoYTUVTU0FHRV9ST0xFX1VOU1BFQ0lGSUVEEAASFQoRTUVTU0FHRV9ST0xFX1VTRVIQARIaChZNRVNTQUdFX1JPTEVfQVNTSVNUQU5UEAIqawoMTWVzc2FnZVBoYXNlEh0KGU1FU1NBR0VfUEhBU0VfVU5TUEVDSUZJRUQQABIcChhNRVNTQUdFX1BIQVNFX0NPTU1FTlRBUlkQARIeChpNRVNTQUdFX1BIQVNFX0ZJTkFMX0FOU1dFUhACKr0BChZBc3Npc3RhbnRNZXNzYWdlU3RhdHVzEigKJEFTU0lTVEFOVF9NRVNTQUdFX1NUQVRVU19VTlNQRUNJRklFRBAAEigKJEFTU0lTVEFOVF9NRVNTQUdFX1NUQVRVU19JTl9QUk9HUkVTUxABEiYKIkFTU0lTVEFOVF9NRVNTQUdFX1NUQVRVU19DT01QTEVURUQQAhInCiNBU1NJU1RBTlRfTUVTU0FHRV9TVEFUVVNfSU5DT01QTEVURRADKpUBCgtUb29sU3VyZmFjZRIcChhUT09MX1NVUkZBQ0VfVU5TUEVDSUZJRUQQABIYChRUT09MX1NVUkZBQ0VfU0VSVklDRRABEhkKFVRPT0xfU1VSRkFDRV9DT01QVVRFUhACEhgKFFRPT0xfU1VSRkFDRV9CUk9XU0VSEAMSGQoVVE9PTF9TVVJGQUNFX0RFTElWRVJZEAQqewoLVG9vbENvbnNlbnQSHAoYVE9PTF9DT05TRU5UX1VOU1BFQ0lGSUVEEAASGgoWVE9PTF9DT05TRU5UX1JFUVVFU1RFRBABEhgKFFRPT0xfQ09OU0VOVF9HUkFOVEVEEAISGAoUVE9PTF9DT05TRU5UX1JFRlVTRUQQAzLABAoNVGhyZWFkU2VydmljZRJGCglHZXRUaHJlYWQSGy5oZXZldGEudjEuR2V0VGhyZWFkUmVxdWVzdBocLmhldmV0YS52MS5HZXRUaHJlYWRSZXNwb25zZRJSCg1HZXRNYWluVGhyZWFkEh8uaGV2ZXRhLnYxLkdldE1haW5UaHJlYWRSZXF1ZXN0GiAuaGV2ZXRhLnYxLkdldE1haW5UaHJlYWRSZXNwb25zZRJMCgtMaXN0VGhyZWFkcxIdLmhldmV0YS52MS5MaXN0VGhyZWFkc1JlcXVlc3QaHi5oZXZldGEudjEuTGlzdFRocmVhZHNSZXNwb25zZRJPCgxVcGRhdGVUaHJlYWQSHi5oZXZldGEudjEuVXBkYXRlVGhyZWFkUmVxdWVzdBofLmhldmV0YS52MS5VcGRhdGVUaHJlYWRSZXNwb25zZRJPCgxEZWxldGVUaHJlYWQSHi5oZXZldGEudjEuRGVsZXRlVGhyZWFkUmVxdWVzdBofLmhldmV0YS52MS5EZWxldGVUaHJlYWRSZXNwb25zZRJPCgxMaXN0TWVzc2FnZXMSHi5oZXZldGEudjEuTGlzdE1lc3NhZ2VzUmVxdWVzdBofLmhldmV0YS52MS5MaXN0TWVzc2FnZXNSZXNwb25zZRJSCg1HZXRUb29sUmVzdWx0Eh8uaGV2ZXRhLnYxLkdldFRvb2xSZXN1bHRSZXF1ZXN0GiAuaGV2ZXRhLnYxLkdldFRvb2xSZXN1bHRSZXNwb25zZWIGcHJvdG8z", [file_heveta_v1_file, file_heveta_v1_run_status, file_google_protobuf_field_mask, file_google_protobuf_struct, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message heveta.v1.Thread
@@ -57,6 +57,13 @@ export type Thread = Message$1<"heveta.v1.Thread"> & {
    * @generated from field: uint32 revision = 5;
    */
   revision: number;
+
+  /**
+   * The user's main thread. It has no title and cannot be renamed or deleted.
+   *
+   * @generated from field: bool main = 6;
+   */
+  main: boolean;
 };
 
 /**
@@ -129,6 +136,11 @@ export type ToolCall = Message$1<"heveta.v1.ToolCall"> & {
    * @generated from field: heveta.v1.ToolSurface surface = 4;
    */
   surface: ToolSurface;
+
+  /**
+   * @generated from field: heveta.v1.ToolConsent consent = 5;
+   */
+  consent: ToolConsent;
 };
 
 /**
@@ -337,6 +349,14 @@ export type Message = Message$1<"heveta.v1.Message"> & {
    * @generated from field: uint32 run_revision = 12;
    */
   runRevision: number;
+
+  /**
+   * A user message the agent's schedule gave (ScheduleService), not one the
+   * person wrote.
+   *
+   * @generated from field: bool scheduled = 13;
+   */
+  scheduled: boolean;
 };
 
 /**
@@ -381,6 +401,36 @@ export const GetThreadResponseSchema: GenMessage<GetThreadResponse> = /*@__PURE_
   messageDesc(file_heveta_v1_thread, 8);
 
 /**
+ * @generated from message heveta.v1.GetMainThreadRequest
+ */
+export type GetMainThreadRequest = Message$1<"heveta.v1.GetMainThreadRequest"> & {
+};
+
+/**
+ * Describes the message heveta.v1.GetMainThreadRequest.
+ * Use `create(GetMainThreadRequestSchema)` to create a new message.
+ */
+export const GetMainThreadRequestSchema: GenMessage<GetMainThreadRequest> = /*@__PURE__*/
+  messageDesc(file_heveta_v1_thread, 9);
+
+/**
+ * @generated from message heveta.v1.GetMainThreadResponse
+ */
+export type GetMainThreadResponse = Message$1<"heveta.v1.GetMainThreadResponse"> & {
+  /**
+   * @generated from field: heveta.v1.Thread thread = 1;
+   */
+  thread?: Thread | undefined;
+};
+
+/**
+ * Describes the message heveta.v1.GetMainThreadResponse.
+ * Use `create(GetMainThreadResponseSchema)` to create a new message.
+ */
+export const GetMainThreadResponseSchema: GenMessage<GetMainThreadResponse> = /*@__PURE__*/
+  messageDesc(file_heveta_v1_thread, 10);
+
+/**
  * @generated from message heveta.v1.ListThreadsRequest
  */
 export type ListThreadsRequest = Message$1<"heveta.v1.ListThreadsRequest"> & {
@@ -405,7 +455,7 @@ export type ListThreadsRequest = Message$1<"heveta.v1.ListThreadsRequest"> & {
  * Use `create(ListThreadsRequestSchema)` to create a new message.
  */
 export const ListThreadsRequestSchema: GenMessage<ListThreadsRequest> = /*@__PURE__*/
-  messageDesc(file_heveta_v1_thread, 9);
+  messageDesc(file_heveta_v1_thread, 11);
 
 /**
  * @generated from message heveta.v1.ListThreadsResponse
@@ -427,7 +477,7 @@ export type ListThreadsResponse = Message$1<"heveta.v1.ListThreadsResponse"> & {
  * Use `create(ListThreadsResponseSchema)` to create a new message.
  */
 export const ListThreadsResponseSchema: GenMessage<ListThreadsResponse> = /*@__PURE__*/
-  messageDesc(file_heveta_v1_thread, 10);
+  messageDesc(file_heveta_v1_thread, 12);
 
 /**
  * @generated from message heveta.v1.UpdateThreadRequest
@@ -449,7 +499,7 @@ export type UpdateThreadRequest = Message$1<"heveta.v1.UpdateThreadRequest"> & {
  * Use `create(UpdateThreadRequestSchema)` to create a new message.
  */
 export const UpdateThreadRequestSchema: GenMessage<UpdateThreadRequest> = /*@__PURE__*/
-  messageDesc(file_heveta_v1_thread, 11);
+  messageDesc(file_heveta_v1_thread, 13);
 
 /**
  * @generated from message heveta.v1.UpdateThreadResponse
@@ -466,7 +516,7 @@ export type UpdateThreadResponse = Message$1<"heveta.v1.UpdateThreadResponse"> &
  * Use `create(UpdateThreadResponseSchema)` to create a new message.
  */
 export const UpdateThreadResponseSchema: GenMessage<UpdateThreadResponse> = /*@__PURE__*/
-  messageDesc(file_heveta_v1_thread, 12);
+  messageDesc(file_heveta_v1_thread, 14);
 
 /**
  * @generated from message heveta.v1.DeleteThreadRequest
@@ -483,7 +533,7 @@ export type DeleteThreadRequest = Message$1<"heveta.v1.DeleteThreadRequest"> & {
  * Use `create(DeleteThreadRequestSchema)` to create a new message.
  */
 export const DeleteThreadRequestSchema: GenMessage<DeleteThreadRequest> = /*@__PURE__*/
-  messageDesc(file_heveta_v1_thread, 13);
+  messageDesc(file_heveta_v1_thread, 15);
 
 /**
  * @generated from message heveta.v1.DeleteThreadResponse
@@ -496,7 +546,7 @@ export type DeleteThreadResponse = Message$1<"heveta.v1.DeleteThreadResponse"> &
  * Use `create(DeleteThreadResponseSchema)` to create a new message.
  */
 export const DeleteThreadResponseSchema: GenMessage<DeleteThreadResponse> = /*@__PURE__*/
-  messageDesc(file_heveta_v1_thread, 14);
+  messageDesc(file_heveta_v1_thread, 16);
 
 /**
  * Pages are newest-first; messages within each page are oldest-first for rendering.
@@ -525,7 +575,7 @@ export type ListMessagesRequest = Message$1<"heveta.v1.ListMessagesRequest"> & {
  * Use `create(ListMessagesRequestSchema)` to create a new message.
  */
 export const ListMessagesRequestSchema: GenMessage<ListMessagesRequest> = /*@__PURE__*/
-  messageDesc(file_heveta_v1_thread, 15);
+  messageDesc(file_heveta_v1_thread, 17);
 
 /**
  * @generated from message heveta.v1.ListMessagesResponse
@@ -547,7 +597,7 @@ export type ListMessagesResponse = Message$1<"heveta.v1.ListMessagesResponse"> &
  * Use `create(ListMessagesResponseSchema)` to create a new message.
  */
 export const ListMessagesResponseSchema: GenMessage<ListMessagesResponse> = /*@__PURE__*/
-  messageDesc(file_heveta_v1_thread, 16);
+  messageDesc(file_heveta_v1_thread, 18);
 
 /**
  * @generated from message heveta.v1.GetToolResultRequest
@@ -569,7 +619,7 @@ export type GetToolResultRequest = Message$1<"heveta.v1.GetToolResultRequest"> &
  * Use `create(GetToolResultRequestSchema)` to create a new message.
  */
 export const GetToolResultRequestSchema: GenMessage<GetToolResultRequest> = /*@__PURE__*/
-  messageDesc(file_heveta_v1_thread, 17);
+  messageDesc(file_heveta_v1_thread, 19);
 
 /**
  * @generated from message heveta.v1.GetToolResultResponse
@@ -586,7 +636,7 @@ export type GetToolResultResponse = Message$1<"heveta.v1.GetToolResultResponse">
  * Use `create(GetToolResultResponseSchema)` to create a new message.
  */
 export const GetToolResultResponseSchema: GenMessage<GetToolResultResponse> = /*@__PURE__*/
-  messageDesc(file_heveta_v1_thread, 18);
+  messageDesc(file_heveta_v1_thread, 20);
 
 /**
  * @generated from enum heveta.v1.MessageRole
@@ -723,7 +773,49 @@ export const ToolSurfaceSchema: GenEnum<ToolSurface> = /*@__PURE__*/
   enumDesc(file_heveta_v1_thread, 3);
 
 /**
- * Threads are created by TurnService.StartTurn with its first input.
+ * Where a call that takes effect outside (an email sent) stands with the
+ * person: it does not run until they approve it (RunService.AnswerToolCall).
+ *
+ * @generated from enum heveta.v1.ToolConsent
+ */
+export enum ToolConsent {
+  /**
+   * The call needs no consent.
+   *
+   * @generated from enum value: TOOL_CONSENT_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * Asked, and waiting for the answer. The run stays active meanwhile.
+   *
+   * @generated from enum value: TOOL_CONSENT_REQUESTED = 1;
+   */
+  REQUESTED = 1,
+
+  /**
+   * @generated from enum value: TOOL_CONSENT_GRANTED = 2;
+   */
+  GRANTED = 2,
+
+  /**
+   * The call was not carried out.
+   *
+   * @generated from enum value: TOOL_CONSENT_REFUSED = 3;
+   */
+  REFUSED = 3,
+}
+
+/**
+ * Describes the enum heveta.v1.ToolConsent.
+ */
+export const ToolConsentSchema: GenEnum<ToolConsent> = /*@__PURE__*/
+  enumDesc(file_heveta_v1_thread, 4);
+
+/**
+ * A user has one main thread, their continuing conversation with the agent,
+ * made the first time it is asked for. Every other thread is a side
+ * conversation, created by TurnService.StartTurn with its first input.
  *
  * @generated from service heveta.v1.ThreadService
  */
@@ -737,6 +829,16 @@ export const ThreadService: GenService<{
     output: typeof GetThreadResponseSchema;
   },
   /**
+   * @generated from rpc heveta.v1.ThreadService.GetMainThread
+   */
+  getMainThread: {
+    methodKind: "unary";
+    input: typeof GetMainThreadRequestSchema;
+    output: typeof GetMainThreadResponseSchema;
+  },
+  /**
+   * The side conversations; the main thread is not among them.
+   *
    * @generated from rpc heveta.v1.ThreadService.ListThreads
    */
   listThreads: {

@@ -44,8 +44,16 @@ export interface ToolSpec {
 	// screenshot saved to a file is safe to take again, but must come before
 	// the call that sends it.
 	concurrent: boolean;
+	// A call takes effect outside and cannot be taken back (an email sent):
+	// it waits for the person's consent before it runs (docs/approvals.md).
+	// Only a call that is neither read-only nor concurrent waits.
+	consent?: boolean;
 	surface: ToolSurface;
 }
+
+// Where a call that needs the person's consent stands: asked and not yet
+// answered, or answered either way.
+export type Consent = "requested" | "granted" | "refused";
 
 // A call the loop has validated and hands to an executor.
 export interface ToolCall {
@@ -159,6 +167,8 @@ export interface PendingToolCall {
 	stepIndex: number;
 	// The call intent was durably committed; an external result may be unknown.
 	started?: boolean;
+	// Set once the person has been asked (ToolSpec.consent).
+	consent?: Consent;
 }
 
 const unexpectedFailure = "The tool failed unexpectedly.";
@@ -234,6 +244,14 @@ export const resumeTool = (
 	call: PendingToolCall,
 	signal: AbortSignal,
 ) => invoke(tools, call, signal, true);
+
+// What the model reads for a call the person did not consent to. It never
+// ran.
+export const refusedToolOutcome: ToolOutcome = {
+	output:
+		"The user did not approve this action, and it was not carried out. Do not try it again unless they ask for it.",
+	isError: true,
+};
 
 const interruptedToolOutcome: ToolOutcome = {
 	output:

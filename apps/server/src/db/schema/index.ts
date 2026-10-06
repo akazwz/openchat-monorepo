@@ -15,6 +15,7 @@ export {
 	runArchivePages,
 } from "./message-content";
 export { runs } from "./runs";
+export { schedules } from "./schedules";
 export { sessions } from "./sessions";
 export { steps } from "./steps";
 export { threads } from "./threads";

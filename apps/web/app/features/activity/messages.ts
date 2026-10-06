@@ -1,0 +1,53 @@
+import { defineMessages } from "~/i18n/catalog";
+
+// What the agent is doing and is set to do (docs/agent-form.md).
+export default defineMessages("activity", {
+	en: {
+		title: "Activity",
+		inProgress: "In progress",
+		scheduled: "Scheduled",
+		working: "Working",
+		open: "Open",
+		delete: "Delete",
+		deleteTitle: "Delete this schedule?",
+		deleteDescription:
+			"It will not run again. Its conversation, with what it has done so far, stays.",
+		cancel: "Cancel",
+		deleteFailed: "Couldn’t delete the schedule. Try again.",
+		loadFailed: "Couldn’t load the schedules.",
+		loading: "Loading activity",
+		emptyTitle: "Nothing in progress or scheduled",
+		emptyDescription:
+			"Ask {name} to do something later or regularly, and it shows up here.",
+		once: "Once",
+		everyMinute: "Every {count} min",
+		everyHour: "Every {count} h",
+		everyDay: "Every {count} d",
+		everyWeek: "Every {count} wk",
+		everyMonth: "Every {count} mo",
+		scheduledMessage: "Scheduled",
+	},
+	"zh-CN": {
+		title: "活动",
+		inProgress: "进行中",
+		scheduled: "已安排",
+		working: "工作中",
+		open: "打开",
+		delete: "删除",
+		deleteTitle: "删除这个安排？",
+		deleteDescription: "它不会再运行。它的对话和已经做过的内容会保留。",
+		cancel: "取消",
+		deleteFailed: "安排没有删除，请重试。",
+		loadFailed: "安排加载失败。",
+		loading: "正在加载活动",
+		emptyTitle: "没有进行中或已安排的事",
+		emptyDescription: "让 {name} 稍后或定期做一件事，它就会出现在这里。",
+		once: "一次",
+		everyMinute: "每 {count} 分钟",
+		everyHour: "每 {count} 小时",
+		everyDay: "每 {count} 天",
+		everyWeek: "每 {count} 周",
+		everyMonth: "每 {count} 个月",
+		scheduledMessage: "按安排",
+	},
+});

@@ -18,7 +18,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file heveta/v1/run.proto.
  */
 export const file_heveta_v1_run: GenFile = /*@__PURE__*/
-  fileDesc("ChNoZXZldGEvdjEvcnVuLnByb3RvEgloZXZldGEudjEihAMKA1J1bhIKCgJpZBgBIAEoCRIRCgl0aHJlYWRfaWQYAiABKAkSDwoHdHVybl9pZBgDIAEoCRISCgpyZXF1ZXN0X2lkGAQgASgJEg8KB2F0dGVtcHQYBSABKA0SDQoFbW9kZWwYBiABKAkSNAoQcmVhc29uaW5nX2VmZm9ydBgHIAEoDjIaLmhldmV0YS52MS5SZWFzb25pbmdFZmZvcnQSJAoGc3RhdHVzGAggASgOMhQuaGV2ZXRhLnYxLlJ1blN0YXR1cxIYChBjYW5jZWxfcmVxdWVzdGVkGAkgASgIEi8KC2NyZWF0ZV90aW1lGAogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgpzdGFydF90aW1lGAsgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIvCgtmaW5pc2hfdGltZRgMIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASEQoJZGV2aWNlX2lkGA0gASgJIh8KDUdldFJ1blJlcXVlc3QSDgoGcnVuX2lkGAEgASgJIjoKDkdldFJ1blJlc3BvbnNlEigKCHNuYXBzaG90GAEgASgLMhYuaGV2ZXRhLnYxLlJ1blNuYXBzaG90IkQKEENhbmNlbFJ1blJlcXVlc3QSEAoGcnVuX2lkGAEgASgJSAASFAoKcmVxdWVzdF9pZBgCIAEoCUgAQggKBmxvb2t1cCI9ChFDYW5jZWxSdW5SZXNwb25zZRIoCghzbmFwc2hvdBgBIAEoCzIWLmhldmV0YS52MS5SdW5TbmFwc2hvdCKTAQoLUnVuU25hcHNob3QSGwoDcnVuGAEgASgLMg4uaGV2ZXRhLnYxLlJ1bhIpCg1pbnB1dF9tZXNzYWdlGAIgASgLMhIuaGV2ZXRhLnYxLk1lc3NhZ2USKgoOb3V0cHV0X21lc3NhZ2UYAyABKAsyEi5oZXZldGEudjEuTWVzc2FnZRIQCghyZXZpc2lvbhgEIAEoDSIqCglUZXh0RGVsdGESDwoHcGFydF9pZBgBIAEoCRIMCgR0ZXh0GAIgASgJImoKClBhcnRDaGFuZ2USJgoEcGFydBgBIAEoCzIWLmhldmV0YS52MS5NZXNzYWdlUGFydEgAEioKCnRleHRfZGVsdGEYAiABKAsyFC5oZXZldGEudjEuVGV4dERlbHRhSABCCAoGY2hhbmdlIpoBCglSdW5DaGFuZ2USEAoIcmV2aXNpb24YASABKA0SGwoDcnVuGAIgASgLMg4uaGV2ZXRhLnYxLlJ1bhImCgdjaGFuZ2VzGAMgAygLMhUuaGV2ZXRhLnYxLlBhcnRDaGFuZ2USNgoSb3V0cHV0X3VwZGF0ZV90aW1lGAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCJ3CghSdW5FdmVudBIOCgZydW5faWQYASABKAkSKgoIc25hcHNob3QYAiABKAsyFi5oZXZldGEudjEuUnVuU25hcHNob3RIABImCgZjaGFuZ2UYAyABKAsyFC5oZXZldGEudjEuUnVuQ2hhbmdlSABCBwoFZXZlbnQykwEKClJ1blNlcnZpY2USPQoGR2V0UnVuEhguaGV2ZXRhLnYxLkdldFJ1blJlcXVlc3QaGS5oZXZldGEudjEuR2V0UnVuUmVzcG9uc2USRgoJQ2FuY2VsUnVuEhsuaGV2ZXRhLnYxLkNhbmNlbFJ1blJlcXVlc3QaHC5oZXZldGEudjEuQ2FuY2VsUnVuUmVzcG9uc2ViBnByb3RvMw", [file_google_protobuf_timestamp, file_heveta_v1_model, file_heveta_v1_run_status, file_heveta_v1_thread]);
+  fileDesc("ChNoZXZldGEvdjEvcnVuLnByb3RvEgloZXZldGEudjEihAMKA1J1bhIKCgJpZBgBIAEoCRIRCgl0aHJlYWRfaWQYAiABKAkSDwoHdHVybl9pZBgDIAEoCRISCgpyZXF1ZXN0X2lkGAQgASgJEg8KB2F0dGVtcHQYBSABKA0SDQoFbW9kZWwYBiABKAkSNAoQcmVhc29uaW5nX2VmZm9ydBgHIAEoDjIaLmhldmV0YS52MS5SZWFzb25pbmdFZmZvcnQSJAoGc3RhdHVzGAggASgOMhQuaGV2ZXRhLnYxLlJ1blN0YXR1cxIYChBjYW5jZWxfcmVxdWVzdGVkGAkgASgIEi8KC2NyZWF0ZV90aW1lGAogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgpzdGFydF90aW1lGAsgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIvCgtmaW5pc2hfdGltZRgMIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASEQoJZGV2aWNlX2lkGA0gASgJIh8KDUdldFJ1blJlcXVlc3QSDgoGcnVuX2lkGAEgASgJIjoKDkdldFJ1blJlc3BvbnNlEigKCHNuYXBzaG90GAEgASgLMhYuaGV2ZXRhLnYxLlJ1blNuYXBzaG90IkQKEENhbmNlbFJ1blJlcXVlc3QSEAoGcnVuX2lkGAEgASgJSAASFAoKcmVxdWVzdF9pZBgCIAEoCUgAQggKBmxvb2t1cCI9ChFDYW5jZWxSdW5SZXNwb25zZRIoCghzbmFwc2hvdBgBIAEoCzIWLmhldmV0YS52MS5SdW5TbmFwc2hvdCJPChVBbnN3ZXJUb29sQ2FsbFJlcXVlc3QSDgoGcnVuX2lkGAEgASgJEhQKDHRvb2xfY2FsbF9pZBgCIAEoCRIQCghhcHByb3ZlZBgDIAEoCCJCChZBbnN3ZXJUb29sQ2FsbFJlc3BvbnNlEigKCHNuYXBzaG90GAEgASgLMhYuaGV2ZXRhLnYxLlJ1blNuYXBzaG90IpMBCgtSdW5TbmFwc2hvdBIbCgNydW4YASABKAsyDi5oZXZldGEudjEuUnVuEikKDWlucHV0X21lc3NhZ2UYAiABKAsyEi5oZXZldGEudjEuTWVzc2FnZRIqCg5vdXRwdXRfbWVzc2FnZRgDIAEoCzISLmhldmV0YS52MS5NZXNzYWdlEhAKCHJldmlzaW9uGAQgASgNIioKCVRleHREZWx0YRIPCgdwYXJ0X2lkGAEgASgJEgwKBHRleHQYAiABKAkiagoKUGFydENoYW5nZRImCgRwYXJ0GAEgASgLMhYuaGV2ZXRhLnYxLk1lc3NhZ2VQYXJ0SAASKgoKdGV4dF9kZWx0YRgCIAEoCzIULmhldmV0YS52MS5UZXh0RGVsdGFIAEIICgZjaGFuZ2UimgEKCVJ1bkNoYW5nZRIQCghyZXZpc2lvbhgBIAEoDRIbCgNydW4YAiABKAsyDi5oZXZldGEudjEuUnVuEiYKB2NoYW5nZXMYAyADKAsyFS5oZXZldGEudjEuUGFydENoYW5nZRI2ChJvdXRwdXRfdXBkYXRlX3RpbWUYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIncKCFJ1bkV2ZW50Eg4KBnJ1bl9pZBgBIAEoCRIqCghzbmFwc2hvdBgCIAEoCzIWLmhldmV0YS52MS5SdW5TbmFwc2hvdEgAEiYKBmNoYW5nZRgDIAEoCzIULmhldmV0YS52MS5SdW5DaGFuZ2VIAEIHCgVldmVudDLqAQoKUnVuU2VydmljZRI9CgZHZXRSdW4SGC5oZXZldGEudjEuR2V0UnVuUmVxdWVzdBoZLmhldmV0YS52MS5HZXRSdW5SZXNwb25zZRJGCglDYW5jZWxSdW4SGy5oZXZldGEudjEuQ2FuY2VsUnVuUmVxdWVzdBocLmhldmV0YS52MS5DYW5jZWxSdW5SZXNwb25zZRJVCg5BbnN3ZXJUb29sQ2FsbBIgLmhldmV0YS52MS5BbnN3ZXJUb29sQ2FsbFJlcXVlc3QaIS5oZXZldGEudjEuQW5zd2VyVG9vbENhbGxSZXNwb25zZWIGcHJvdG8z", [file_google_protobuf_timestamp, file_heveta_v1_model, file_heveta_v1_run_status, file_heveta_v1_thread]);
 
 /**
  * One execution attempt answering a turn's input; its output message has
@@ -199,6 +199,50 @@ export const CancelRunResponseSchema: GenMessage<CancelRunResponse> = /*@__PURE_
   messageDesc(file_heveta_v1_run, 4);
 
 /**
+ * @generated from message heveta.v1.AnswerToolCallRequest
+ */
+export type AnswerToolCallRequest = Message<"heveta.v1.AnswerToolCallRequest"> & {
+  /**
+   * @generated from field: string run_id = 1;
+   */
+  runId: string;
+
+  /**
+   * @generated from field: string tool_call_id = 2;
+   */
+  toolCallId: string;
+
+  /**
+   * @generated from field: bool approved = 3;
+   */
+  approved: boolean;
+};
+
+/**
+ * Describes the message heveta.v1.AnswerToolCallRequest.
+ * Use `create(AnswerToolCallRequestSchema)` to create a new message.
+ */
+export const AnswerToolCallRequestSchema: GenMessage<AnswerToolCallRequest> = /*@__PURE__*/
+  messageDesc(file_heveta_v1_run, 5);
+
+/**
+ * @generated from message heveta.v1.AnswerToolCallResponse
+ */
+export type AnswerToolCallResponse = Message<"heveta.v1.AnswerToolCallResponse"> & {
+  /**
+   * @generated from field: heveta.v1.RunSnapshot snapshot = 1;
+   */
+  snapshot?: RunSnapshot | undefined;
+};
+
+/**
+ * Describes the message heveta.v1.AnswerToolCallResponse.
+ * Use `create(AnswerToolCallResponseSchema)` to create a new message.
+ */
+export const AnswerToolCallResponseSchema: GenMessage<AnswerToolCallResponse> = /*@__PURE__*/
+  messageDesc(file_heveta_v1_run, 6);
+
+/**
  * The run and its messages at one committed revision.
  *
  * @generated from message heveta.v1.RunSnapshot
@@ -230,7 +274,7 @@ export type RunSnapshot = Message<"heveta.v1.RunSnapshot"> & {
  * Use `create(RunSnapshotSchema)` to create a new message.
  */
 export const RunSnapshotSchema: GenMessage<RunSnapshot> = /*@__PURE__*/
-  messageDesc(file_heveta_v1_run, 5);
+  messageDesc(file_heveta_v1_run, 7);
 
 /**
  * @generated from message heveta.v1.TextDelta
@@ -252,7 +296,7 @@ export type TextDelta = Message<"heveta.v1.TextDelta"> & {
  * Use `create(TextDeltaSchema)` to create a new message.
  */
 export const TextDeltaSchema: GenMessage<TextDelta> = /*@__PURE__*/
-  messageDesc(file_heveta_v1_run, 6);
+  messageDesc(file_heveta_v1_run, 8);
 
 /**
  * @generated from message heveta.v1.PartChange
@@ -283,7 +327,7 @@ export type PartChange = Message<"heveta.v1.PartChange"> & {
  * Use `create(PartChangeSchema)` to create a new message.
  */
 export const PartChangeSchema: GenMessage<PartChange> = /*@__PURE__*/
-  messageDesc(file_heveta_v1_run, 7);
+  messageDesc(file_heveta_v1_run, 9);
 
 /**
  * What one committed transaction changed: the run's record and its output's
@@ -319,7 +363,7 @@ export type RunChange = Message<"heveta.v1.RunChange"> & {
  * Use `create(RunChangeSchema)` to create a new message.
  */
 export const RunChangeSchema: GenMessage<RunChange> = /*@__PURE__*/
-  messageDesc(file_heveta_v1_run, 8);
+  messageDesc(file_heveta_v1_run, 10);
 
 /**
  * @generated from message heveta.v1.RunEvent
@@ -355,7 +399,7 @@ export type RunEvent = Message<"heveta.v1.RunEvent"> & {
  * Use `create(RunEventSchema)` to create a new message.
  */
 export const RunEventSchema: GenMessage<RunEvent> = /*@__PURE__*/
-  messageDesc(file_heveta_v1_run, 9);
+  messageDesc(file_heveta_v1_run, 11);
 
 /**
  * @generated from service heveta.v1.RunService
@@ -376,6 +420,18 @@ export const RunService: GenService<{
     methodKind: "unary";
     input: typeof CancelRunRequestSchema;
     output: typeof CancelRunResponseSchema;
+  },
+  /**
+   * Approves or refuses a call waiting for consent (ToolCall.consent is
+   * REQUESTED). The same answer again changes nothing; the opposite one, or
+   * an answer to a call that is not waiting, is FAILED_PRECONDITION.
+   *
+   * @generated from rpc heveta.v1.RunService.AnswerToolCall
+   */
+  answerToolCall: {
+    methodKind: "unary";
+    input: typeof AnswerToolCallRequestSchema;
+    output: typeof AnswerToolCallResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_heveta_v1_run, 0);

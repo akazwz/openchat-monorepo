@@ -427,6 +427,7 @@ export async function prepareRun(
 				role: "user",
 				parts: encodeParts(newParts!),
 				text: messageText(newParts!),
+				scheduled: input.input.value.scheduled === true,
 				createdAt,
 				updatedAt: createdAt,
 			});

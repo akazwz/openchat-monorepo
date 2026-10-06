@@ -6,7 +6,7 @@ import { useLanguage } from "~/i18n/language";
 
 interface DesktopBridge {
 	version: number;
-	onNavigate(callback: (path: "/" | "/settings") => void): () => void;
+	onNavigate(callback: (path: string) => void): () => void;
 	setAppearance(
 		theme: "system" | "light" | "dark",
 		language: "en" | "zh-CN",
@@ -20,6 +20,9 @@ declare global {
 	}
 }
 
+// "/" is what a client older than the main conversation sends for "New Chat".
+const desktopPaths = ["/", "/new", "/settings"];
+
 export function useDesktop() {
 	const navigate = useNavigate();
 	const { mode } = useColorMode();
@@ -27,7 +30,9 @@ export function useDesktop() {
 	useEffect(
 		() =>
 			window.hevetaDesktop?.onNavigate((path) => {
-				void navigate(path);
+				// The client's menus name a page of the app; nothing else is
+				// followed.
+				if (desktopPaths.includes(path)) void navigate(path);
 			}),
 		[navigate],
 	);

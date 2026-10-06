@@ -1,3 +1,5 @@
+import { brandName } from "@heveta/brand";
+
 import type { Thread } from "~/features/threads/types";
 import type { Translate } from "~/i18n/use-t";
 
@@ -8,7 +10,11 @@ import type { Translate } from "~/i18n/use-t";
 export function threadTitle(text: string) {
 	return Array.from(text.trim()).slice(0, 40).join("");
 }
-// How a conversation is named wherever it is shown; one with no title yet
-// (still being titled, or started with no text) shows as "Untitled".
-export const displayTitle = (t: Translate, thread: Pick<Thread, "title">) =>
-	thread.title || t("threads.untitled");
+// How a conversation is named wherever it is shown. The main conversation is
+// the agent's own, so it goes by the agent's name; a side conversation with
+// no title yet (still being titled, or started with no text) shows as
+// "Untitled".
+export const displayTitle = (
+	t: Translate,
+	thread: Pick<Thread, "title"> & Partial<Pick<Thread, "main">>,
+) => (thread.main ? brandName : thread.title || t("threads.untitled"));

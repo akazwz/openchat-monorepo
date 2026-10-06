@@ -1,18 +1,21 @@
 import type { FileReference } from "@/modules/files/types";
 
 import type { ModelInput } from "./responses/types";
-import type { ToolSurface } from "./tools";
+import type { Consent, ToolSurface } from "./tools";
 import type { Omitted, WindowPolicy } from "./window";
 
 // Runtime outcomes are independent of persistence, RPC, and the chat interface.
 // A run has no step, token, or time budget: it ends when the model replies
 // without calling a tool, when the user stops it, or on an error. Values 2–4
-// are retired (formerly budget limits).
+// are retired (formerly budget limits). WAITING does not end the run: a call
+// waits for the person's consent, and the loop goes on from its checkpoint
+// once they have answered.
 export enum StopReason {
 	UNSPECIFIED = 0,
 	MODEL_COMPLETE = 1,
 	CANCELLED = 5,
 	ERROR = 6,
+	WAITING = 7,
 }
 
 export interface ModelText {
@@ -50,6 +53,8 @@ export interface ToolCallEvent {
 	arguments: string;
 	// Its tool's surface; none for a tool the run does not have.
 	surface?: ToolSurface;
+	// The call waits for the person's consent, or has their answer.
+	consent?: Consent;
 }
 export interface ToolResultEvent {
 	type: "toolResult";

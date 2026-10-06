@@ -4,6 +4,8 @@ import { defineMessages } from "~/i18n/catalog";
 export default defineMessages("computer", {
 	en: {
 		title: "Computer",
+		agentComputer: "{name}’s computer",
+		screen: "Screen",
 		pageErrorDescription:
 			"Couldn’t display this page. Open another page and try again.",
 		terminal: "Terminal",
@@ -41,6 +43,8 @@ export default defineMessages("computer", {
 	},
 	"zh-CN": {
 		title: "电脑",
+		agentComputer: "{name} 的电脑",
+		screen: "屏幕",
 		pageErrorDescription: "页面显示失败，请切换到其他页面后重试。",
 		terminal: "终端",
 		files: "文件",

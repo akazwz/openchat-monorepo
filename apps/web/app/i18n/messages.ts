@@ -2,6 +2,7 @@ import type { MessagesByLocale } from "@astryxdesign/core/i18n";
 import astryxZh from "@astryxdesign/core/locales/zh-CN.json";
 
 import common from "~/components/messages";
+import activity from "~/features/activity/messages";
 import auth from "~/features/auth/messages";
 import computer from "~/features/computer/messages";
 import devices from "~/features/devices/messages";
@@ -14,6 +15,7 @@ import { type AppLocale, locales, toCatalog } from "./catalog";
 
 // Every feature's messages (each feature's messages.ts).
 const features = [
+	activity,
 	devices,
 	common,
 	auth,

@@ -49,6 +49,8 @@ export interface RunInput {
 					text: string;
 					fileIds: string[];
 					deviceId?: string;
+					// Given by a schedule's wake-up, never by a person's request.
+					scheduled?: boolean;
 				};
 		  }
 		| { case: "retryTurn"; value: { turnId: string; previousRunId: string } };

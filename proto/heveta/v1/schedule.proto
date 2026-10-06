@@ -1,0 +1,42 @@
+syntax = "proto3";
+package heveta.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// The agent's wake-ups: times at which it is given instructions without
+// anyone writing to it. The agent makes them with its tools, at the person's
+// request; people see them and can delete them.
+service ScheduleService {
+  rpc ListSchedules(ListSchedulesRequest) returns (ListSchedulesResponse);
+  // Idempotent: a schedule already gone (it ran once, or the agent deleted
+  // it) is deleted.
+  rpc DeleteSchedule(DeleteScheduleRequest) returns (DeleteScheduleResponse);
+}
+enum ScheduleUnit {
+  SCHEDULE_UNIT_UNSPECIFIED = 0;
+  SCHEDULE_UNIT_MINUTE = 1;
+  SCHEDULE_UNIT_HOUR = 2;
+  SCHEDULE_UNIT_DAY = 3;
+  SCHEDULE_UNIT_WEEK = 4;
+  SCHEDULE_UNIT_MONTH = 5;
+}
+message Schedule {
+  string id = 1;
+  // The conversation its wake-ups run in.
+  string thread_id = 2;
+  string instructions = 3;
+  google.protobuf.Timestamp next_time = 4;
+  // Zero for a schedule that runs once.
+  uint32 every_count = 5;
+  ScheduleUnit every_unit = 6;
+  google.protobuf.Timestamp create_time = 7;
+}
+message ListSchedulesRequest {}
+message ListSchedulesResponse {
+  // By next run, the soonest first.
+  repeated Schedule schedules = 1;
+}
+message DeleteScheduleRequest {
+  string schedule_id = 1;
+}
+message DeleteScheduleResponse {}

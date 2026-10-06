@@ -1,6 +1,6 @@
 import type { JsonValue } from "@/lib/json";
 import type { FileReference } from "@/modules/files/types";
-import type { ToolSurface } from "@/runtime/tools";
+import type { Consent, ToolSurface } from "@/runtime/tools";
 
 export interface Thread {
 	id: string;
@@ -10,6 +10,8 @@ export interface Thread {
 	activeAt: Date;
 	// Its latest run has not finished (Thread.running in thread.proto).
 	running: boolean;
+	// The user's continuing conversation with the agent (threads.main).
+	main: boolean;
 }
 
 export interface ToolCall {
@@ -22,6 +24,9 @@ export interface ToolCall {
 	arguments: string;
 	// Where it did its work (ToolSurface), recorded when it was called.
 	surface?: ToolSurface;
+	// The call waits for the person's consent, or has their answer
+	// (docs/approvals.md).
+	consent?: Consent;
 }
 export interface ToolResult {
 	toolCallId: string;
@@ -56,6 +61,8 @@ export interface Message {
 	runId: string | null;
 	role: "user" | "assistant";
 	parts: MessagePart[];
+	// A user message given by a schedule's wake-up.
+	scheduled?: boolean;
 	createdAt: Date;
 	updatedAt: Date;
 }

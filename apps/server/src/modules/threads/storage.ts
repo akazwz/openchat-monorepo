@@ -79,6 +79,7 @@ export function messageFromRow(row: MessageRecord): Message {
 		runId: row.runId,
 		role: row.role,
 		parts: decodeParts(row.parts),
+		...(row.scheduled ? { scheduled: true } : {}),
 		createdAt: row.createdAt,
 		updatedAt: row.updatedAt,
 	};

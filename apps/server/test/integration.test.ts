@@ -62,6 +62,7 @@ import {
 	MessagePhase,
 	MessageRole,
 	ThreadService,
+	ToolConsent,
 } from "@/gen/heveta/v1/thread_pb";
 import { TurnService } from "@/gen/heveta/v1/turn_pb";
 import worker from "@/index";
@@ -85,6 +86,7 @@ import {
 import { memoryContext, memoryTools } from "@/modules/memories/tools";
 import * as runArchive from "@/modules/runs/archive";
 import { prepareRun } from "@/modules/runs/commands";
+import { recordConsent } from "@/modules/runs/consent";
 import * as runDelivery from "@/modules/runs/delivery";
 import { dispatchRun } from "@/modules/runs/delivery";
 import { executeRun } from "@/modules/runs/driver";
@@ -110,6 +112,13 @@ import {
 } from "@/modules/sandbox/tools";
 import { placeUploads } from "@/modules/sandbox/uploads";
 import { Workspace, WorkspaceLostError } from "@/modules/sandbox/workspace";
+import {
+	createSchedule,
+	deleteSchedule,
+	fireSchedule,
+	listSchedules,
+	nextOccurrence,
+} from "@/modules/schedules/service";
 import { StepKind, StepStatus } from "@/modules/steps/types";
 import { joinPart, omitPartBody } from "@/modules/threads/content";
 import {
@@ -138,14 +147,28 @@ const fake = vi.hoisted(() => ({
 	release: undefined as (() => void) | undefined,
 	actors: new Map<string, AbortController>(),
 	hanging: false,
+	// How often the "consent" mode's send_out ran.
+	sent: 0,
 	jobs: new Set<Promise<void>>(),
 	locals: new Map<
 		string,
 		{ local: LocalRunStorage; fixture: ReturnType<typeof localStorageFixture> }
 	>(),
+	// Schedules' alarms, by schedule ID.
+	alarms: new Map<string, Date>(),
 	// Actors armed before acceptance, by run ID; arming fails while set.
 	armed: [] as string[],
 	armFails: false,
+}));
+// A schedule's alarm is a Durable Object's; here it is only recorded, and the
+// test rings it (fireSchedule).
+vi.mock("@/modules/schedules/delivery", () => ({
+	async armSchedule(id: string, at: Date) {
+		fake.alarms.set(id, at);
+	},
+	async disarmSchedule(id: string) {
+		fake.alarms.delete(id);
+	},
 }));
 // This suite replaces provider generation; background title generation uses
 // the same provider and must not leave SDK retries running between fixtures.
@@ -172,7 +195,9 @@ vi.mock("@/modules/runs/delivery", () => ({
 		}
 		const local = entry.local;
 		const job = executeRun(database.db, runId, controller.signal, local)
-			.then(async () => {
+			.then(async (waiting) => {
+				// The run waits for the person; an answer dispatches it again.
+				if (waiting) return;
 				await local.archive(database.db);
 				const current = await getRunById(database.db, runId);
 				if (current) await publishRunState(database.db, current);
@@ -254,6 +279,33 @@ vi.mock("@/modules/runs/delivery", () => ({
 	) {
 		const local = fake.locals.get(runId)?.local;
 		return local && sliceText(local.textChunks(), offset, limit);
+	},
+	// As the actor does: the execution that asked ends first, the answer is
+	// recorded, and the run is woken.
+	async answerRunToolCall(
+		runId: string,
+		_userId: string,
+		callId: string,
+		approved: boolean,
+	) {
+		await Promise.allSettled(fake.jobs);
+		const local = await localOf(runId);
+		const database = createDatabase();
+		try {
+			const run = await getRunById(database.db, runId);
+			if (!run || !local) return false;
+			const { answered } = await recordConsent(
+				database.db,
+				local,
+				run,
+				callId,
+				approved ? "granted" : "refused",
+			);
+			if (answered) await dispatchRun(runId);
+			return answered;
+		} finally {
+			await database.close();
+		}
 	},
 	async cancelRunExecution(runId: string) {
 		fake.actors.get(runId)?.abort();
@@ -347,6 +399,30 @@ vi.mock("@/modules/runs/tools", async (importOriginal) => {
 						},
 					]),
 				]);
+			// In "consent" mode the run also has send_out, which takes effect
+			// outside and so waits for the person's consent.
+			if (fake.mode === "consent")
+				return composeToolSets([
+					tools,
+					localToolSet([
+						{
+							name: "send_out",
+							description: "send_out",
+							parameters: {
+								type: "object",
+								properties: {},
+								additionalProperties: false,
+							},
+							readOnly: false,
+							concurrent: false,
+							consent: true,
+							execute: async () => {
+								fake.sent++;
+								return { output: "sent" };
+							},
+						},
+					]),
+				]);
 			if (fake.mode !== "images") return tools;
 			const [db, run] = args;
 			const store = async (fileName: string) =>
@@ -415,6 +491,32 @@ vi.mock("@/runtime/responses/cloudflare", () => ({
 					yield { type: "response", response: call };
 					return;
 				}
+			}
+			if (
+				fake.mode === "consent" &&
+				!input.some(
+					(item) => "type" in item && item.type === "function_call_output",
+				)
+			) {
+				const call: ModelResponse = {
+					id: crypto.randomUUID(),
+					status: "completed",
+					incomplete_details: null,
+					usage: { output_tokens: 1 },
+					output: [
+						{
+							type: "function_call",
+							id: "fc-send",
+							call_id: "send",
+							name: "send_out",
+							arguments: "{}",
+							status: "completed",
+						},
+					],
+				};
+				yield* new ResponsesOutput().finish(call.output);
+				yield { type: "response", response: call };
+				return;
 			}
 			if (fake.mode === "hang") fake.inputs.push(structuredClone(input));
 			if (
@@ -793,6 +895,7 @@ describe.skipIf(!url)("PostgreSQL + Connect integration", () => {
 			"TRUNCATE users,threads,messages,runs,files,verification_codes,sessions,memories,avatar_garbage RESTART IDENTITY CASCADE",
 		);
 		fake.mode = "normal";
+		fake.alarms.clear();
 		fake.requests = 0;
 		fake.inputs = [];
 		fake.release = undefined;
@@ -1220,6 +1323,35 @@ describe.skipIf(!url)("PostgreSQL + Connect integration", () => {
 		const settled = await Promise.allSettled(running);
 		expect(settled.map((result) => result.status)).toEqual(["fulfilled"]);
 		expect(await db.select().from(runs).where(eq(runs.id, runId))).toEqual([]);
+	});
+	test("a user has one main conversation: two devices asking at once make one, and it is neither listed nor deleted", async () => {
+		const [first, second] = await Promise.all([
+			clients().thread.getMainThread({}),
+			clients().thread.getMainThread({}),
+		]);
+		const id = first.thread?.id ?? "";
+		expect(first.thread?.main).toBe(true);
+		expect(second.thread?.id).toBe(id);
+		expect(
+			(await db.select().from(threads).where(eq(threads.userId, "owner")))
+				.filter((thread) => thread.main)
+				.map((thread) => thread.id),
+		).toEqual([id]);
+		// The side nav's list is of side conversations.
+		const listed = await clients().thread.listThreads({});
+		expect(listed.threads.map((thread) => thread.id)).not.toContain(id);
+		await expect(
+			clients().thread.deleteThread({ threadId: id }),
+		).rejects.toMatchObject({ code: Code.FailedPrecondition });
+		await expect(
+			clients().thread.updateThread({
+				thread: { id, title: "renamed" },
+				updateMask: { paths: ["title"] },
+			}),
+		).rejects.toMatchObject({ code: Code.FailedPrecondition });
+		// Each account has its own.
+		const other = await clients(otherSession).thread.getMainThread({});
+		expect(other.thread?.id).not.toBe(id);
 	});
 	test("a run's progress reaches the user's devices in commit order; a duplicate StartTurn changes nothing", async () => {
 		fake.mode = "pause";
@@ -1781,6 +1913,224 @@ describe.skipIf(!url)("PostgreSQL + Connect integration", () => {
 		expect((await snapshot(failed.id)).outputMessage?.runStatus).toBe(
 			RunStatus.FAILED,
 		);
+	});
+	test("a call that needs consent waits for the person: approved it runs once, refused it never runs, and a stop ends the wait", async () => {
+		fake.mode = "consent";
+		fake.sent = 0;
+		const consentOf = (current: RunSnapshot) => {
+			const call = current.outputMessage?.parts.find(
+				(part) => part.content.case === "toolCall",
+			);
+			return call?.content.case === "toolCall"
+				? call.content.value.consent
+				: undefined;
+		};
+		const answer = (runId: string, approved: boolean) =>
+			clients().run.answerToolCall({ runId, toolCallId: "send", approved });
+		// A run up to where its call asks: the execution has ended, the run has
+		// not, and nothing was sent.
+		const waitingRun = async () => {
+			const accepted = await clients().turn.startTurn({
+				threadId: await thread(),
+				requestId: crypto.randomUUID(),
+				input: { text: "send it" },
+			});
+			const runId = accepted.snapshot?.run?.id ?? "";
+			await vi.waitFor(
+				async () => {
+					expect(consentOf(await snapshot(runId))).toBe(ToolConsent.REQUESTED);
+					expect(fake.actors.has(runId)).toBe(false);
+				},
+				{ timeout: 10_000, interval: 20 },
+			);
+			expect(active((await snapshot(runId)).run as Run)).toBe(true);
+			expect(
+				(await stepsOf(runId)).map((step) => [step.kind, step.status]),
+			).toEqual([
+				[StepKind.MODEL, StepStatus.COMPLETED],
+				[StepKind.TOOL, StepStatus.PENDING],
+			]);
+			return { accepted, runId };
+		};
+
+		const approved = await waitingRun();
+		expect(fake.sent).toBe(0);
+		const granted = await answer(approved.runId, true);
+		expect(consentOf(granted.snapshot as RunSnapshot)).toBe(
+			ToolConsent.GRANTED,
+		);
+		// The same answer again (a second device, a retry) changes nothing.
+		await answer(approved.runId, true);
+		const sent = await finishRun(approved.accepted.snapshot);
+		expect(sent.run?.status).toBe(RunStatus.COMPLETED);
+		expect(fake.sent).toBe(1);
+		expect(consentOf(sent)).toBe(ToolConsent.GRANTED);
+		expect(
+			(await stepsOf(approved.runId)).map((step) => [step.kind, step.status]),
+		).toEqual([
+			[StepKind.MODEL, StepStatus.COMPLETED],
+			[StepKind.TOOL, StepStatus.COMPLETED],
+			[StepKind.MODEL, StepStatus.COMPLETED],
+		]);
+		// Too late for the other answer.
+		await expect(answer(approved.runId, false)).rejects.toMatchObject({
+			code: Code.FailedPrecondition,
+		});
+
+		const refused = await waitingRun();
+		await answer(refused.runId, false);
+		const unsent = await finishRun(refused.accepted.snapshot);
+		expect(unsent.run?.status).toBe(RunStatus.COMPLETED);
+		expect(fake.sent).toBe(1);
+		expect(consentOf(unsent)).toBe(ToolConsent.REFUSED);
+		// The model read that it did not happen, and replied.
+		const result = unsent.outputMessage?.parts.find(
+			(part) => part.content.case === "toolResult",
+		);
+		expect(
+			result?.content.case === "toolResult" && [
+				result.content.value.isError,
+				JSON.stringify(result.content.value.output),
+			],
+		).toEqual([true, expect.stringContaining("did not approve")]);
+		await expect(answer(refused.runId, true)).rejects.toMatchObject({
+			code: Code.FailedPrecondition,
+		});
+
+		// A stop while it waits ends the run without the call; the actor wakes
+		// on a stop (RunActor.cancel), which this harness does by hand.
+		const stopped = await waitingRun();
+		await clients().run.cancelRun({
+			lookup: { case: "runId", value: stopped.runId },
+		});
+		await dispatchRun(stopped.runId);
+		const ended = await finishRun(stopped.accepted.snapshot);
+		expect(ended.run?.status).toBe(RunStatus.CANCELLED);
+		expect(fake.sent).toBe(1);
+		await expect(answer(stopped.runId, true)).rejects.toMatchObject({
+			code: Code.FailedPrecondition,
+		});
+		// Someone else's run is not found.
+		await expect(
+			clients(otherSession).run.answerToolCall({
+				runId: stopped.runId,
+				toolCallId: "send",
+				approved: true,
+			}),
+		).rejects.toMatchObject({ code: Code.NotFound });
+	});
+	test("a schedule wakes the agent in its own conversation: once per occurrence, waiting while it is busy, and gone when it is over", async () => {
+		const day = 24 * 60 * 60_000;
+		const start = new Date();
+		const due = new Date(start.getTime() + 60_000);
+		const after: Promise<unknown>[] = [];
+		const ring = (id: string, now: Date) =>
+			fireSchedule(db, id, now, (work) => after.push(work));
+		const turnsOf = async (threadId: string) =>
+			(await clients().thread.listMessages({ threadId })).messages.filter(
+				(message) => message.role === MessageRole.USER,
+			);
+		// Months keep their day, or the month's last when it has none.
+		expect(
+			nextOccurrence(
+				new Date("2026-01-31T08:00:00Z"),
+				{ count: 1, unit: "month" },
+				new Date("2026-01-31T08:00:01Z"),
+			).toISOString(),
+		).toBe("2026-02-28T08:00:00.000Z");
+
+		const daily = await createSchedule(db, "owner", {
+			instructions: "Summarize my mailbox",
+			firstAt: due,
+			every: { count: 1, unit: "day" },
+		});
+		expect(fake.alarms.get(daily.id)).toEqual(due);
+		expect(await listSchedules(db, "owner")).toMatchObject([
+			{ id: daily.id, every: { count: 1, unit: "day" } },
+		]);
+		// Its conversation is a side conversation, named for what it does.
+		expect(
+			(await clients().thread.getThread({ threadId: daily.threadId })).thread
+				?.title,
+		).toBe("Summarize my mailbox");
+		// Rung early, nothing happens.
+		expect(await ring(daily.id, start)).toEqual(due);
+		expect(await turnsOf(daily.threadId)).toHaveLength(0);
+
+		// Due: one turn, marked as the schedule's, and the next occurrence.
+		fake.mode = "pause";
+		const next = await ring(daily.id, new Date(due.getTime() + 5_000));
+		expect(next).toEqual(new Date(due.getTime() + day));
+		const [input] = await turnsOf(daily.threadId);
+		expect(input.scheduled).toBe(true);
+		expect(input.parts[0].content).toMatchObject({
+			case: "text",
+			value: "Summarize my mailbox",
+		});
+		// The next occurrence comes while that turn is still being answered:
+		// it waits, and no second turn is made.
+		const later = new Date(due.getTime() + day + 5_000);
+		expect(await ring(daily.id, later)).toEqual(
+			new Date(later.getTime() + 2 * 60_000),
+		);
+		expect(await turnsOf(daily.threadId)).toHaveLength(1);
+		await vi.waitFor(() => expect(fake.release).toBeDefined());
+		fake.release!();
+		fake.mode = "normal";
+		await Promise.all(after.splice(0));
+		await vi.waitFor(
+			async () =>
+				expect(
+					(await clients().thread.getThread({ threadId: daily.threadId }))
+						.thread?.running,
+				).toBe(false),
+			{ timeout: 10_000, interval: 20 },
+		);
+		// Now it runs; rung again for the same occurrence (its alarm retried),
+		// it is still one turn.
+		expect(await ring(daily.id, later)).toEqual(
+			new Date(due.getTime() + 2 * day),
+		);
+		await pool.query("UPDATE schedules SET next_at = $1 WHERE id = $2", [
+			new Date(due.getTime() + day),
+			daily.id,
+		]);
+		await ring(daily.id, later);
+		expect(await turnsOf(daily.threadId)).toHaveLength(2);
+		await Promise.all(after.splice(0));
+
+		// One that runs once is gone after it has.
+		const once = await createSchedule(db, "owner", {
+			instructions: "Remind me to call the bank",
+			firstAt: due,
+		});
+		expect(await ring(once.id, later)).toBeUndefined();
+		expect(await turnsOf(once.threadId)).toHaveLength(1);
+		expect((await listSchedules(db, "owner")).map((item) => item.id)).toEqual([
+			daily.id,
+		]);
+		await Promise.all(after.splice(0));
+
+		// Only its owner deletes it; deleting its conversation ends it too,
+		// and an alarm left behind finds nothing to do.
+		await expect(deleteSchedule(db, "other", daily.id)).rejects.toMatchObject({
+			code: ErrorCode.NotFound,
+		});
+		await settleExecutors();
+		await clients().thread.deleteThread({ threadId: daily.threadId });
+		expect(await listSchedules(db, "owner")).toEqual([]);
+		expect(await ring(daily.id, later)).toBeUndefined();
+		// Not in the past, and not faster than every 15 minutes.
+		await expect(
+			createSchedule(db, "owner", { instructions: "x", firstAt: start }),
+		).rejects.toMatchObject({ code: ErrorCode.InvalidArgument });
+		await expect(
+			createSchedule(db, "owner", {
+				instructions: "x",
+				firstAt: due,
+				every: { count: 5, unit: "minute" },
+			}),
+		).rejects.toMatchObject({ code: ErrorCode.InvalidArgument });
 	});
 	test("a run whose host stopped during a tool call resumes from that call and finishes", async () => {
 		fake.mode = "hang";

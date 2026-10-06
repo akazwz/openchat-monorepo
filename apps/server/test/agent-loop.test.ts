@@ -1415,3 +1415,172 @@ test("past the file budget a run clears its oldest images, keeps the newest, and
 	// Below the trigger again, the next request only grows at its end.
 	expect(inputs[4].slice(0, inputs[3].length)).toEqual(inputs[3]);
 });
+
+// A reply that asks for two calls: a note saved, then an email sent, which
+// needs the person's consent.
+function consentFixture() {
+	const ran: string[] = [];
+	const tool = (name: string, consent: boolean): LocalTool => ({
+		name,
+		description: name,
+		parameters: { type: "object", properties: {}, additionalProperties: false },
+		readOnly: false,
+		concurrent: false,
+		...(consent ? { consent } : {}),
+		async execute() {
+			ran.push(name);
+			return { output: `${name} done` };
+		},
+	});
+	const calls: ModelResponse = {
+		...response(),
+		output: ["note", "send"].map((name) => ({
+			type: "function_call",
+			id: `item-${name}`,
+			call_id: `call-${name}`,
+			name,
+			arguments: "{}",
+			status: "completed",
+		})),
+	};
+	return {
+		ran,
+		tools: localToolSet([tool("note", false), tool("send", true)]),
+		calls,
+	};
+}
+
+test("a call that needs consent stops the loop without running, after the calls before it", async () => {
+	const { ran, tools, calls } = consentFixture();
+	const checkpoints: LoopCheckpoint[] = [];
+	const requests: ModelInput[] = [];
+	const result = await consume(
+		agentLoop(
+			[{ role: "user", content: "Save a note, then send it" }],
+			new AbortController().signal,
+			async function* (input) {
+				requests.push(input);
+				yield* modelEvents(calls);
+			},
+			context,
+			tools,
+			{
+				complete: noCompletion,
+				async saveCheckpoint(checkpoint) {
+					checkpoints.push(structuredClone(checkpoint));
+				},
+			},
+		),
+	);
+	expect(result.reason).toBe(StopReason.WAITING);
+	expect(ran).toEqual(["note"]);
+	expect(requests).toHaveLength(1);
+	// The request is saved with the boundary the next execution starts from.
+	const last = checkpoints.at(-1)!;
+	expect(last.phase).toBe("tools");
+	expect(last.pendingCalls).toMatchObject([
+		{ callId: "call-send", started: false, consent: "requested" },
+	]);
+	expect(last.steps).toEqual([
+		{
+			index: 3,
+			kind: "tool",
+			toolName: "send",
+			status: "pending",
+			consent: "requested",
+		},
+	]);
+	// The conversation shows the call as waiting.
+	expect(
+		result.events
+			.filter((event) => event.type === "toolCall")
+			.map((event) => [event.callId, event.consent]),
+	).toEqual([
+		["call-note", undefined],
+		["call-send", undefined],
+		["call-send", "requested"],
+	]);
+});
+
+test("an answered call runs once when approved, never when refused, and waits on when unanswered", async () => {
+	const waitingAt = async () => {
+		const { ran, tools, calls } = consentFixture();
+		const checkpoints: LoopCheckpoint[] = [];
+		await consume(
+			agentLoop(
+				[{ role: "user", content: "Save a note, then send it" }],
+				new AbortController().signal,
+				async function* () {
+					yield* modelEvents(calls);
+				},
+				context,
+				tools,
+				{
+					complete: noCompletion,
+					async saveCheckpoint(checkpoint) {
+						checkpoints.push(structuredClone(checkpoint));
+					},
+				},
+			),
+		);
+		ran.length = 0;
+		return { ran, tools, checkpoint: checkpoints.at(-1)! };
+	};
+	const resume = async (consent: "requested" | "granted" | "refused") => {
+		const { ran, tools, checkpoint } = await waitingAt();
+		const requests: ModelInput[] = [];
+		const saved: LoopCheckpoint[] = [];
+		const result = await consume(
+			agentLoop(
+				[],
+				new AbortController().signal,
+				async function* (input) {
+					requests.push(structuredClone(input));
+					yield* modelEvents(response());
+				},
+				context,
+				tools,
+				{
+					checkpoint: {
+						...checkpoint,
+						pendingCalls: checkpoint.pendingCalls?.map((call) => ({
+							...call,
+							consent,
+						})),
+					},
+					complete: noCompletion,
+					async saveCheckpoint(next) {
+						saved.push(structuredClone(next));
+					},
+				},
+			),
+		);
+		const answer = requests[0]?.find(
+			(item) =>
+				"type" in item &&
+				item.type === "function_call_output" &&
+				item.call_id === "call-send",
+		);
+		return { ran, result, requests, saved, answer };
+	};
+
+	const approved = await resume("granted");
+	expect(approved.result.reason).toBe(StopReason.MODEL_COMPLETE);
+	expect(approved.ran).toEqual(["send"]);
+	expect(approved.answer).toMatchObject({ output: "send done" });
+
+	const refused = await resume("refused");
+	expect(refused.result.reason).toBe(StopReason.MODEL_COMPLETE);
+	expect(refused.ran).toEqual([]);
+	// The model reads that it did not happen, and why.
+	expect(refused.answer).toMatchObject({
+		output: expect.stringContaining("did not approve"),
+	});
+
+	const unanswered = await resume("requested");
+	expect(unanswered.result.reason).toBe(StopReason.WAITING);
+	expect(unanswered.ran).toEqual([]);
+	expect(unanswered.requests).toEqual([]);
+	// Asked once: waiting on saves nothing new.
+	expect(unanswered.saved).toEqual([]);
+});

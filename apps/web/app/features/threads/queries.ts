@@ -55,6 +55,25 @@ export const threadsQuery = (userId: string) =>
 		getNextPageParam: (page) => page.nextPageToken || undefined,
 		enabled: Boolean(userId),
 	});
+// The user's main conversation, the one the app opens to (docs/agent-form.md).
+// The server makes it the first time it is asked for. Which conversation it
+// is never changes; its record lives with the others' (threadQuery), where
+// events keep it current, and is seeded from here.
+export const mainThreadQuery = (userId: string) =>
+	queryOptions({
+		queryKey: ["users", userId, "mainThread"],
+		queryFn: async ({ signal }): Promise<Thread> => {
+			const { thread } = await threadClient.getMainThread({}, { signal });
+			if (!thread) throw new Error("Thread response is missing");
+			queryClient.setQueryData(
+				threadQuery(userId, thread.id).queryKey,
+				(known) => (known ? latestActivity(thread, known) : thread),
+			);
+			return thread;
+		},
+		enabled: Boolean(userId),
+		staleTime: Number.POSITIVE_INFINITY,
+	});
 // One conversation's record (its title). A conversation the send flow just
 // created is seeded here, so its page never waits for this request.
 export const threadQuery = (userId: string, threadId: string) =>
@@ -205,6 +224,8 @@ export function upsertThread(userId: string, thread: Thread) {
 				? latestActivity(thread, known)
 				: thread,
 	);
+	// The side nav lists the side conversations.
+	if (thread.main) return;
 	applyChange<ThreadsData>(threadsQuery(userId).queryKey, (data) => {
 		if (!data || isDeletedThread(userId, thread.id)) return data;
 		const known = data.pages

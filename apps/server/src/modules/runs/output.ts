@@ -39,6 +39,7 @@ export class RunOutput {
 						name: event.name,
 						arguments: event.arguments,
 						...(event.surface ? { surface: event.surface } : {}),
+						...(event.consent ? { consent: event.consent } : {}),
 					},
 				},
 			});

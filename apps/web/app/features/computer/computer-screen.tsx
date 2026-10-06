@@ -16,6 +16,7 @@ import type { MessageKey } from "~/i18n/messages";
 import { useT } from "~/i18n/use-t";
 import { usePageVisible } from "~/lib/use-page-visible";
 
+import { ComputerTabs } from "./computer-tabs";
 import { ConnectionStatus } from "./connection-status";
 import { useReconnect } from "./reconnect";
 
@@ -87,6 +88,7 @@ export default function ComputerScreen() {
 			header={
 				<AppPageHeader
 					title={t("computer.title")}
+					tabs={<ComputerTabs view="screen" />}
 					end={
 						<>
 							<ConnectionStatus

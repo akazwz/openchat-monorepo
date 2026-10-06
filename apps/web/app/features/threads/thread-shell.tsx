@@ -3,7 +3,8 @@ import { Badge } from "@astryxdesign/core/Badge";
 import { ContextMenu } from "@astryxdesign/core/ContextMenu";
 import { useHotkeys, useMediaQuery } from "@astryxdesign/core/hooks";
 import { Icon } from "@astryxdesign/core/Icon";
-import { VStack } from "@astryxdesign/core/Layout";
+import { IconButton } from "@astryxdesign/core/IconButton";
+import { HStack, VStack } from "@astryxdesign/core/Layout";
 import { MobileNav } from "@astryxdesign/core/MobileNav";
 import { MoreMenu } from "@astryxdesign/core/MoreMenu";
 import {
@@ -20,15 +21,16 @@ import { Tooltip } from "@astryxdesign/core/Tooltip";
 import { BrandMark, brandName } from "@heveta/brand";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import {
-	FolderOpen,
+	Brain,
+	CalendarClock,
 	Mail,
+	MessageCircle,
 	Monitor,
 	PanelLeftClose,
 	PanelLeftOpen,
 	PenLine,
 	Search,
 	SquarePen,
-	SquareTerminal,
 	Trash2,
 } from "lucide-react";
 import { lazy, type ReactNode, Suspense, useState } from "react";
@@ -46,7 +48,11 @@ import { useAuthStore } from "~/features/auth/store";
 import { mailboxQuery } from "~/features/mail/queries";
 import { DeleteThreadDialog } from "~/features/threads/dialogs/delete-thread-dialog";
 import { SearchThreadsDialog } from "~/features/threads/dialogs/search-threads-dialog";
-import { threadsQuery } from "~/features/threads/queries";
+import {
+	mainThreadQuery,
+	threadQuery,
+	threadsQuery,
+} from "~/features/threads/queries";
 import { useThreadsInFlight } from "~/features/threads/thread-commands";
 import { displayTitle } from "~/features/threads/title";
 import type { Thread } from "~/features/threads/types";
@@ -79,12 +85,17 @@ function ExpandItem() {
 		/>
 	) : null;
 }
+function CollapsedOnly({ children }: { children: ReactNode }) {
+	return useSideNavCollapse().isCollapsed ? children : null;
+}
 function ExpandedOnly({ children }: { children: ReactNode }) {
 	return useSideNavCollapse().isCollapsed ? null : children;
 }
 
-// AppShell with only a SideNav: the nav carries the product identity; the page
-// header renders the mobile toggle where it is needed.
+// AppShell with only a SideNav, organized around the agent (docs/agent-form.md):
+// who it is and whether it is working, then what it has (the conversation with
+// it, its computer, its mailbox, what it remembers), then the side
+// conversations. The page header renders the mobile toggle where it is needed.
 export default function ThreadShell() {
 	const t = useT();
 	const { threadId: activeId } = useParams();
@@ -120,6 +131,19 @@ export default function ThreadShell() {
 	const { showAll } = useThreadsInFlight();
 	const threads = showAll(data?.pages.flatMap((page) => page.items) ?? []);
 	const closeNavigation = () => setMobileOpen(false);
+	// Which conversation is the main one, then its record as events keep it.
+	const mainId = useQuery(mainThreadQuery(userId)).data?.id ?? "";
+	const { data: mainThread } = useQuery(threadQuery(userId, mainId));
+	// Its own address shows it too (a link from search or the agent).
+	const onMain = location.pathname === "/" || activeId === mainId;
+	// The agent is working while a reply is being made in any conversation.
+	const working =
+		Boolean(mainThread?.running) || threads.some((thread) => thread.running);
+	const status = t(working ? "threads.agentWorking" : "threads.agentIdle");
+	const openSearch = () => {
+		closeNavigation();
+		setSearchOpen(true);
+	};
 	const unreadMail = useQuery(mailboxQuery(userId)).data?.unreadCount ?? 0;
 	// ⌘K / Ctrl+K opens search from anywhere, the composer included, as in ChatGPT.
 	useHotkeys([
@@ -136,40 +160,35 @@ export default function ThreadShell() {
 	const navItems = (
 		<>
 			<ExpandItem />
-			{/* An action, as in ChatGPT and Claude: never shown as the current page. */}
+			{/* The continuing conversation with the agent, the app's home. A reply
+			being written there shows from any other page, as a side
+			conversation's does on its row. */}
 			<SideNavItem
-				label={t("threads.newThread")}
-				icon={SquarePen}
+				label={t("threads.mainThread")}
+				icon={MessageCircle}
 				href="/"
+				isSelected={onMain}
+				onClick={closeNavigation}
+				endContent={
+					mainThread?.running && !onMain ? (
+						<Spinner size="sm" aria-label={t("threads.replying")} />
+					) : undefined
+				}
+			/>
+			{/* What it is doing and is set to do. */}
+			<SideNavItem
+				label={t("activity.title")}
+				icon={CalendarClock}
+				href="/activity"
+				isSelected={location.pathname === "/activity"}
 				onClick={closeNavigation}
 			/>
-			<SideNavItem
-				label={t("threads.searchThreads")}
-				icon={Search}
-				onClick={() => {
-					closeNavigation();
-					setSearchOpen(true);
-				}}
-			/>
+			{/* One place with its screen, terminal and files as tabs. */}
 			<SideNavItem
 				label={t("computer.title")}
 				icon={Monitor}
 				href="/computer"
-				isSelected={location.pathname === "/computer"}
-				onClick={closeNavigation}
-			/>
-			<SideNavItem
-				label={t("computer.terminal")}
-				icon={SquareTerminal}
-				href="/computer/terminal"
-				isSelected={location.pathname === "/computer/terminal"}
-				onClick={closeNavigation}
-			/>
-			<SideNavItem
-				label={t("computer.files")}
-				icon={FolderOpen}
-				href="/computer/files"
-				isSelected={location.pathname === "/computer/files"}
+				isSelected={location.pathname.startsWith("/computer")}
 				onClick={closeNavigation}
 			/>
 			{/* The agent's mailbox (docs/email.md), a page of its own, with how
@@ -184,6 +203,28 @@ export default function ThreadShell() {
 					unreadMail ? <Badge label={String(unreadMail)} /> : undefined
 				}
 			/>
+			<SideNavItem
+				label={t("settings.sectionMemory")}
+				icon={Brain}
+				href="/memory"
+				isSelected={location.pathname === "/memory"}
+				onClick={closeNavigation}
+			/>
+			{/* The collapsed rail has no list of side conversations, so the two
+			actions of its header stand here. */}
+			<CollapsedOnly>
+				<SideNavItem
+					label={t("threads.newThread")}
+					icon={SquarePen}
+					href="/new"
+					onClick={closeNavigation}
+				/>
+				<SideNavItem
+					label={t("threads.searchThreads")}
+					icon={Search}
+					onClick={openSearch}
+				/>
+			</CollapsedOnly>
 		</>
 	);
 	const account = (
@@ -200,7 +241,31 @@ export default function ThreadShell() {
 	);
 	const hasNoHover = useMediaQuery("(hover: none)");
 	const recent = (
-		<SideNavSection title={t("threads.recent")}>
+		<SideNavSection
+			title={t("threads.sideChats")}
+			// Starting one and finding one, as actions of the list they act on.
+			endContent={
+				<HStack gap={0.5}>
+					<IconButton
+						label={t("threads.searchThreads")}
+						tooltip={t("threads.searchThreads")}
+						icon={<Icon icon={Search} size="sm" color="secondary" />}
+						variant="ghost"
+						size="sm"
+						onClick={openSearch}
+					/>
+					<IconButton
+						label={t("threads.newThread")}
+						tooltip={t("threads.newThread")}
+						icon={<Icon icon={SquarePen} size="sm" color="secondary" />}
+						variant="ghost"
+						size="sm"
+						href="/new"
+						onClick={closeNavigation}
+					/>
+				</HStack>
+			}
+		>
 			{isLoading && (
 				<VStack padding={4} align="center">
 					<Spinner aria-label={t("threads.loadingThreads")} size="sm" />
@@ -265,8 +330,8 @@ export default function ThreadShell() {
 			<PrefetchPageLinks page="/settings" />
 			<PrefetchPageLinks page="/mail" />
 			<PrefetchPageLinks page="/computer" />
-			<PrefetchPageLinks page="/computer/terminal" />
-			<PrefetchPageLinks page="/computer/files" />
+			<PrefetchPageLinks page="/memory" />
+			<PrefetchPageLinks page="/activity" />
 			<AppShell
 				mobileNav={{
 					isOpen: mobileOpen,
@@ -281,6 +346,7 @@ export default function ThreadShell() {
 							header={
 								<SideNavHeading
 									heading={brandName}
+									subheading={status}
 									icon={<BrandMark size={20} />}
 								/>
 							}
@@ -312,6 +378,9 @@ export default function ThreadShell() {
 						header={
 							<SideNavHeading
 								heading={brandName}
+								// Whether the agent is at work, wherever its person is in
+								// the app.
+								subheading={status}
 								icon={<BrandMark size={20} />}
 								headerEndContent={
 									<Tooltip content={t("threads.collapseSidebar")}>

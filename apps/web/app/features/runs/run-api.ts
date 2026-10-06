@@ -24,3 +24,20 @@ export async function cancelRun(lookup: RunLookup, signal: AbortSignal) {
 		throw new Error("Run lookup changed");
 	return snapshot;
 }
+// The person's answer to a call that waits for their consent.
+export async function answerToolCall(
+	runId: string,
+	toolCallId: string,
+	approved: boolean,
+) {
+	const snapshot = readSnapshot(
+		(
+			await runClient.answerToolCall(
+				{ runId, toolCallId, approved },
+				{ timeoutMs: 10000 },
+			)
+		).snapshot,
+	);
+	if (snapshot.run.id !== runId) throw new Error("Run lookup changed");
+	return snapshot;
+}

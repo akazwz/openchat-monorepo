@@ -9,6 +9,10 @@ import "heveta/v1/thread.proto";
 service RunService {
   rpc GetRun(GetRunRequest) returns (GetRunResponse);
   rpc CancelRun(CancelRunRequest) returns (CancelRunResponse);
+  // Approves or refuses a call waiting for consent (ToolCall.consent is
+  // REQUESTED). The same answer again changes nothing; the opposite one, or
+  // an answer to a call that is not waiting, is FAILED_PRECONDITION.
+  rpc AnswerToolCall(AnswerToolCallRequest) returns (AnswerToolCallResponse);
 }
 // One execution attempt answering a turn's input; its output message has
 // run_id set to its id.
@@ -51,6 +55,14 @@ message CancelRunRequest {
   }
 }
 message CancelRunResponse {
+  RunSnapshot snapshot = 1;
+}
+message AnswerToolCallRequest {
+  string run_id = 1;
+  string tool_call_id = 2;
+  bool approved = 3;
+}
+message AnswerToolCallResponse {
   RunSnapshot snapshot = 1;
 }
 // The run and its messages at one committed revision.

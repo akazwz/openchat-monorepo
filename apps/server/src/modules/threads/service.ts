@@ -1,4 +1,14 @@
-import { and, desc, eq, exists, getColumns, ilike, lt, sql } from "drizzle-orm";
+import {
+	and,
+	desc,
+	eq,
+	exists,
+	getColumns,
+	ilike,
+	lt,
+	not,
+	sql,
+} from "drizzle-orm";
 import { QueryBuilder } from "drizzle-orm/pg-core";
 
 import type { Database } from "@/db/client";
@@ -57,12 +67,14 @@ export const threadFromRow = ({
 	revision,
 	updatedAt,
 	running,
+	main,
 }: ThreadRecord & { running: boolean }): Thread => ({
 	id,
 	title,
 	revision,
 	activeAt: updatedAt,
 	running,
+	main,
 });
 const owned = (userId: string, id: string) =>
 	and(eq(threads.id, id), eq(threads.userId, userId));
@@ -79,6 +91,36 @@ export async function getThread(db: Database, userId: string, id: string) {
 		.where(owned(userId, id));
 	if (!row) throw new AppError("Thread not found", ErrorCode.NotFound);
 	return threadFromRow(row);
+}
+// The user's continuing conversation with the agent, made on their first
+// visit. Two devices asking at once make one: the index on a user's main
+// conversation turns the second insert into nothing, and both read the same
+// row.
+export async function getMainThread(db: Database, userId: string) {
+	const main = and(eq(threads.userId, userId), threads.main);
+	const read = () => db.select(threadColumns).from(threads).where(main);
+	let [row] = await read();
+	if (!row) {
+		await db
+			.insert(threads)
+			.values({ userId, main: true })
+			.onConflictDoNothing();
+		[row] = await read();
+	}
+	if (!row) throw new AppError("Main thread missing", ErrorCode.Internal);
+	return threadFromRow(row);
+}
+// The main conversation has no title and stays for as long as the account.
+async function refuseMain(db: Database, userId: string, id: string) {
+	const [row] = await db
+		.select({ main: threads.main })
+		.from(threads)
+		.where(owned(userId, id));
+	if (row?.main)
+		throw new AppError(
+			"The main conversation cannot be renamed or deleted",
+			ErrorCode.FailedPrecondition,
+		);
 }
 function activityCursor(cursor: string) {
 	const [time, id] = cursor.split(":");
@@ -97,8 +139,9 @@ export async function listThreads(
 		throw new AppError("Search query is too long", ErrorCode.InvalidArgument);
 	const scope = `threads:${userId}:${query}`;
 	const { limit, cursor } = pageOptions(input.pageSize, input.pageToken, scope);
-	// The most recently active first; a page continues after the last one's
-	// time and ID.
+	// The side conversations, the most recently active first; a page
+	// continues after the last one's time and ID. The main conversation is
+	// read on its own (getMainThread).
 	const after = cursor ? activityCursor(cursor) : undefined;
 	const rows = await db
 		.select(threadColumns)
@@ -106,6 +149,7 @@ export async function listThreads(
 		.where(
 			and(
 				eq(threads.userId, userId),
+				not(threads.main),
 				query ? ilike(threads.title, containing(query)) : undefined,
 				after
 					? sql`(${threads.updatedAt}, ${threads.id}) < (${after.time}, ${after.id})`
@@ -131,6 +175,7 @@ export async function updateThread(
 		throw new AppError("Title is too long", ErrorCode.InvalidArgument);
 	if (update.title === undefined)
 		throw new AppError("Thread update is empty", ErrorCode.InvalidArgument);
+	await refuseMain(db, userId, id);
 	const [row] = await db
 		.update(threads)
 		.set({
@@ -151,6 +196,7 @@ export async function updateThread(
 // deleted with the rest, and its actor, told after the commit, stops at once
 // (or at its next commit, which finds the run gone).
 export async function deleteThread(db: Database, userId: string, id: string) {
+	await refuseMain(db, userId, id);
 	const running = await db.transaction(async (tx) => {
 		const [thread] = await tx
 			.select({ id: threads.id })

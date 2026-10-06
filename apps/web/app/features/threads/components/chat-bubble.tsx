@@ -26,6 +26,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
 	AppWindow,
 	Brain,
+	CalendarClock,
 	Check,
 	ChevronDown,
 	ChevronUp,
@@ -71,12 +72,14 @@ import {
 	type MessagePart,
 	MessageRole,
 	type ToolCall,
+	ToolConsent,
 	type ToolResult,
 	ToolSurface,
 } from "~/gen/heveta/v1/thread_pb";
 import type { MessageKey } from "~/i18n/messages";
 import { type Translate, useT } from "~/i18n/use-t";
 
+import { ConsentCard } from "./consent-card";
 import MessageImage from "./message-image";
 
 // KaTeX (~260 KB, and its stylesheet) is most of a reply's code, and few
@@ -548,7 +551,11 @@ type ActivityStep =
 	| { kind: "tool"; entry: ToolEntry };
 type Block =
 	| { kind: "part"; part: MessagePart }
-	| { kind: "activity"; key: string; steps: ActivityStep[] };
+	| { kind: "activity"; key: string; steps: ActivityStep[] }
+	// A call waiting for the person's consent: a card of its own where it
+	// stands in the reply, not a row folded into the activity. Once answered
+	// it is a step like any other.
+	| { kind: "consent"; key: string; call: ToolCall };
 
 // How the agent hands the person something: the file a delivery call sends
 // (send_file) is its own part in the reply, right after the call, and is all
@@ -568,8 +575,10 @@ function deliveries(message: Message) {
 // Groups each stretch of thinking and tool calls into one activity block. A
 // result renders in its call's row, so it neither adds a row nor breaks the
 // stretch. A model may reason in several items in a row; they read as one
-// thinking step.
-function messageBlocks(message: Message): Block[] {
+// thinking step. `answerable`: the reply's run goes on, so a call waiting for
+// consent can still be answered; in a reply that was stopped while one
+// waited, it is a step that never ran.
+function messageBlocks(message: Message, answerable: boolean): Block[] {
 	const blocks: Block[] = [];
 	const delivered = deliveries(message);
 	for (const part of message.parts) {
@@ -600,6 +609,14 @@ function messageBlocks(message: Message): Block[] {
 		}
 		if (content.case !== "toolCall" && content.case !== "toolResult") {
 			blocks.push({ kind: "part", part });
+			continue;
+		}
+		if (
+			answerable &&
+			content.case === "toolCall" &&
+			content.value.consent === ToolConsent.REQUESTED
+		) {
+			blocks.push({ kind: "consent", key: part.id, call: content.value });
 			continue;
 		}
 		let entry: ToolEntry | undefined;
@@ -696,6 +713,7 @@ function AttachedFile({ file }: { file: File }) {
 }
 
 function UserBubble({ message }: { message: Message }) {
+	const t = useT();
 	const files = message.parts.flatMap((part) =>
 		part.content.case === "file"
 			? [{ id: part.id, file: part.content.value }]
@@ -706,6 +724,15 @@ function UserBubble({ message }: { message: Message }) {
 	const text = textContent(message);
 	return (
 		<ChatMessage sender="user">
+			{/* Given by one of the agent's schedules, not written by the person. */}
+			{message.scheduled && (
+				<HStack gap={1} vAlign="center" hAlign="end">
+					<Icon icon={CalendarClock} size="xsm" color="secondary" />
+					<Text type="supporting" color="secondary">
+						{t("activity.scheduledMessage")}
+					</Text>
+				</HStack>
+			)}
 			{/* Images, then other files, each row as tall as its own items (as
 			in the composer). */}
 			{[images, others].map(
@@ -789,7 +816,7 @@ export function AssistantBubble({
 			),
 	);
 	const lastContent = message.parts.at(-1)?.content;
-	const blocks = messageBlocks(message);
+	const blocks = messageBlocks(message, Boolean(pending) && !isInterrupted);
 	// Streaming text shows its own progress, and an activity at the end its
 	// own (its title line): one loader at a time.
 	const waitingForReply =
@@ -837,7 +864,14 @@ export function AssistantBubble({
 			}
 		>
 			{blocks.map((block, index) =>
-				block.kind === "activity" ? (
+				block.kind === "consent" ? (
+					<ConsentCard
+						key={block.key}
+						runId={message.runId}
+						call={block.call}
+						name={toolName(block.call.name, t)}
+					/>
+				) : block.kind === "activity" ? (
 					<Activity
 						key={block.key}
 						steps={block.steps}

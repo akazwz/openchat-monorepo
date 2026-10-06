@@ -8,6 +8,7 @@ import { StepStatus } from "@/modules/steps/types";
 import type { PartDescriptor } from "@/modules/threads/content";
 import { scanText, sliceText } from "@/modules/threads/text-source";
 
+import { recordConsent } from "./consent";
 import { executeRun } from "./driver";
 import { maxConsecutiveFailures } from "./execution-errors";
 import { LocalRunStorage } from "./local-storage";
@@ -51,6 +52,10 @@ const stoppedRepeatedly =
 // The run executes in the object's background, not inside an alarm (whose
 // handler may last at most 15 minutes): a run takes as long as it takes, and
 // the alarm only wakes the object and keeps it alive.
+// A run that waits for the person (a call needs their consent,
+// docs/approvals.md) has no execution and no alarm: the object sleeps, for as
+// long as it takes, with the run's checkpoint in its storage, until their
+// answer or a stop wakes it.
 export class RunActor extends DurableObject<Env> {
 	#local?: LocalRunStorage;
 	get local() {
@@ -58,6 +63,8 @@ export class RunActor extends DurableObject<Env> {
 	}
 
 	#execution?: { controller: AbortController; promise: Promise<void> };
+	// Answers are recorded one at a time.
+	#answers: Promise<unknown> = Promise.resolve();
 
 	// Wakes the run's executor at once, or after `delayMs`: a run being
 	// accepted is armed before its transaction commits (turns/service.ts), so
@@ -71,7 +78,51 @@ export class RunActor extends DurableObject<Env> {
 	async cancel(runId: string): Promise<void> {
 		await this.#schedule(runId, Date.now());
 		this.#execution?.controller.abort();
+		// An execution that ended meanwhile, leaving the run to wait for the
+		// person, took its alarm with it: the stop needs one of its own.
+		if (!this.#execution) await this.#schedule(runId, Date.now());
 		await this.#observeControl();
+	}
+
+	// The person's answer to a call that waits for their consent
+	// (recordConsent); the run then goes on from there. False when the call
+	// is not waiting for this answer.
+	async answer(
+		runId: string,
+		userId: string,
+		callId: string,
+		approved: boolean,
+	): Promise<boolean> {
+		const record = async () => {
+			// The execution that asked saved the request and is ending; its
+			// last commits come first. A call not waiting is answered without
+			// waiting for an execution that may run for hours.
+			if (this.local.state() && this.local.consent(callId) === "requested")
+				await this.#execution?.promise;
+			try {
+				return await this.#withRun(userId, async (db, run) => {
+					const { answered, event } = await recordConsent(
+						db,
+						this.local,
+						run,
+						callId,
+						approved ? "granted" : "refused",
+					);
+					if (event) await announce(run.userId, [userEvents.run(event)]);
+					return answered;
+				});
+			} catch (error) {
+				// The run ended and its actor retired while the answer came.
+				if (error instanceof AppError && error.code === ErrorCode.NotFound)
+					return false;
+				throw error;
+			}
+		};
+		const answer = this.#answers.then(record, record);
+		this.#answers = answer.catch(() => {});
+		const answered = await answer;
+		if (answered) await this.#schedule(runId, Date.now());
+		return answered;
 	}
 
 	async #schedule(runId: string, at: number) {
@@ -211,6 +262,8 @@ export class RunActor extends DurableObject<Env> {
 		signal: AbortSignal,
 	) {
 		let failures = schedule.failures;
+		// The execution ended with the run waiting for the person.
+		let waiting = false;
 		// Progress starts a new count, with this execution the first of it
 		// should it fail after all.
 		const progressed = () => {
@@ -262,7 +315,7 @@ export class RunActor extends DurableObject<Env> {
 											: StepStatus.FAILED,
 							});
 						} else
-							await executeRun(
+							waiting = await executeRun(
 								database.db,
 								run.id,
 								signal,
@@ -270,27 +323,47 @@ export class RunActor extends DurableObject<Env> {
 								progressed,
 							);
 					}
-					await this.local.archive(database.db);
-					run = await getRunById(database.db, run.id);
+					if (!waiting) {
+						await this.local.archive(database.db);
+						run = await getRunById(database.db, run.id);
+					}
 				}
 				// A final PG commit can outlive its acknowledgment to this actor.
 				// Confirm the same seal before discarding local recovery data.
 				const state = this.local.state();
 				if (
+					!waiting &&
 					run &&
 					!isActiveRun(run.status) &&
 					state?.seal &&
 					isActiveRun(state.run.status)
 				)
 					await this.local.archive(database.db);
-				if (run && isActiveRun(run.status))
+				if (!waiting && run && isActiveRun(run.status))
 					throw new Error("Run execution has not reached a terminal state");
 				// Devices keep showing a run as running until they see its final
 				// state, so the wakeup retires only once that state is published;
 				// a failed publish backs off and publishes again.
-				if (run) await publishRunState(database.db, run);
+				if (!waiting && run) await publishRunState(database.db, run);
 			} finally {
 				await database.close();
+			}
+			if (waiting) {
+				// Nothing failed, and nothing is left to do until the person
+				// answers: the count starts over and the heartbeat stops. From
+				// here an answer or a stop finds no execution and sets its own
+				// wakeup; one that came while this execution was ending (the
+				// signal, or an answer already in the checkpoint) is woken for
+				// now.
+				await this.ctx.storage.put<RunSchedule>(scheduleKey, {
+					runId: schedule.runId,
+					failures: 0,
+				});
+				this.#execution = undefined;
+				if (!signal.aborted && this.local.awaitsConsent())
+					await this.ctx.storage.deleteAlarm();
+				else await this.ctx.storage.setAlarm(Date.now());
+				return;
 			}
 			// Only a confirmed archive/missing Run can retire and remove bodies.
 			await this.ctx.storage.deleteAll();

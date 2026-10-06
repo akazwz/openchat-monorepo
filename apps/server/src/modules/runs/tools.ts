@@ -3,6 +3,7 @@ import { nativeRun } from "@/modules/devices/tools";
 import { mailToolSet } from "@/modules/mail/tools";
 import { memoryTools } from "@/modules/memories/tools";
 import { runComputer, sandboxToolSet } from "@/modules/sandbox/tools";
+import { scheduleTools } from "@/modules/schedules/tools";
 import { conversationTools } from "@/modules/threads/tools";
 import { webTools } from "@/modules/web/tools";
 import { composeToolSets, localToolSet, type ToolSet } from "@/runtime/tools";
@@ -37,6 +38,7 @@ export const runTools = (
 		localToolSet([
 			...webTools(),
 			...memoryTools(db, run.userId),
+			...scheduleTools(db, run.userId),
 			...conversationTools(db, run.userId, run.threadId, options.activeText),
 		]),
 		native

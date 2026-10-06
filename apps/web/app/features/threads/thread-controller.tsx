@@ -1,6 +1,6 @@
 import { useToast } from "@astryxdesign/core/Toast";
 import { create } from "@bufbuild/protobuf";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import {
 	createContext,
 	type ReactNode,
@@ -49,6 +49,7 @@ import {
 	type TurnCommand,
 } from "./drafts";
 import {
+	mainThreadQuery,
 	messagesQuery,
 	removeThread,
 	showThreadActivity,
@@ -125,8 +126,15 @@ function useController() {
 	const t = useT();
 	const toast = useToast();
 	const navigate = useNavigate();
-	const { threadId: routeThreadId = "" } = useParams();
+	const params = useParams();
 	const userId = useAuthStore((state) => state.user?.id ?? "");
+	// The home page shows the main conversation, once which one that is has
+	// been read; /new, a conversation not yet made.
+	const isHome = Boolean(useMatch("/"));
+	const isNew = Boolean(useMatch("/new"));
+	const { data: mainThread } = useQuery(mainThreadQuery(userId));
+	const routeThreadId =
+		params.threadId ?? (isHome ? (mainThread?.id ?? "") : "");
 	const sessionVersion = useAuthStore((state) => state.sessionVersion);
 	const owner = { userId, sessionVersion };
 	const [drafts] = useState(() => new ThreadDrafts());
@@ -150,7 +158,7 @@ function useController() {
 	});
 	const replyRunning = Boolean(reply && isRunningReply(reply));
 	// The draft of the conversation on screen; none while settings are.
-	const onConversation = Boolean(useMatch("/") || routeThreadId);
+	const onConversation = isHome || isNew || Boolean(routeThreadId);
 	const visibleKey = onConversation ? draftKey(owner, routeThreadId) : "";
 	const visible = useRef(visibleKey);
 	visible.current = visibleKey;

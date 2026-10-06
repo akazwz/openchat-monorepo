@@ -139,7 +139,7 @@ const specs: ToolSpec[] = [
 	},
 	{
 		name: "email_send",
-		description: `Send an email from your own address, as plain text: a new one, or a reply to an email you received (reply_to), which goes in its thread. Attach files from your computer by path: an email can be up to ${maxSendMegabytes} MB as sent, in which attachments take a third more than their size. You can send to ${mailConfig.sendLimit} recipients in any 24 hours, counting to, cc, and bcc.`,
+		description: `Send an email from your own address, as plain text: a new one, or a reply to an email you received (reply_to), which goes in its thread. Attach files from your computer by path: an email can be up to ${maxSendMegabytes} MB as sent, in which attachments take a third more than their size. You can send to ${mailConfig.sendLimit} recipients in any 24 hours, counting to, cc, and bcc. The user is shown the email and approves it before it goes out, so call this without asking them first; if they do not approve, it is not sent.`,
 		parameters: {
 			type: "object",
 			properties: {
@@ -189,6 +189,10 @@ const specs: ToolSpec[] = [
 		},
 		readOnly: false,
 		concurrent: false,
+		// Sent mail cannot be taken back, and what it says may have been put
+		// there by a web page or an email the model read: the person sees it
+		// first (docs/approvals.md).
+		consent: true,
 		surface: "service",
 	},
 ];

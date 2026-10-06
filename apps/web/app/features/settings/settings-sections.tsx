@@ -1,7 +1,6 @@
 import { Icon } from "@astryxdesign/core/Icon";
 import { List, ListItem } from "@astryxdesign/core/List";
 import {
-	Brain,
 	ChevronRight,
 	Laptop,
 	type LucideIcon,
@@ -18,7 +17,6 @@ import { useT } from "~/i18n/use-t";
 import { AccountSection } from "./account-section";
 import { ComputerSection } from "./computer-section";
 import { GeneralSection } from "./general-section";
-import { MemorySection } from "./memory-section";
 
 // New settings are a new entry here: each section has its own address.
 export const settingsSections: {
@@ -44,12 +42,6 @@ export const settingsSections: {
 		label: "devices.title",
 		icon: Laptop,
 		Content: DevicesSection,
-	},
-	{
-		key: "memory",
-		label: "settings.sectionMemory",
-		icon: Brain,
-		Content: MemorySection,
 	},
 	{
 		key: "account",

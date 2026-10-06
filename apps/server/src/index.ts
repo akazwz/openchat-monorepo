@@ -20,6 +20,8 @@ export { RunActor } from "@/modules/runs/actor";
 // The user's native computer; snapshot handles live in its DO storage.
 export { Computer } from "@/modules/sandbox/computer-object";
 export { DeviceConnection } from "@/modules/devices/connection";
+// One per schedule: its alarm is the schedule's due time.
+export { ScheduleActor } from "@/modules/schedules/actor";
 
 // What each of the Worker's cron triggers (cloudflare.config.ts) runs: garbage
 // collection only. Runs need no sweep; each is armed before it is accepted

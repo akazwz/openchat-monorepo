@@ -72,6 +72,9 @@ const interruptedFailure =
 // DeferredExecutionError: the actor retries it, and ends a run that keeps
 // failing. `progressed` is told once this execution has committed an
 // operation's outcome: a failure after it is not a repeat of the one before.
+// It answers true when the run has not ended but waits for the person: a
+// call needs their consent (docs/approvals.md), and the next execution goes
+// on from the saved boundary once they have answered.
 export async function executeRun(
 	db: Database,
 	runId: string,
@@ -89,7 +92,14 @@ export async function executeRun(
 		published = published.then(() => announce(userId, [userEvents.run(event)]));
 	};
 	try {
-		await execute(db, runId, actorSignal, local, publishInOrder, progressed);
+		return await execute(
+			db,
+			runId,
+			actorSignal,
+			local,
+			publishInOrder,
+			progressed,
+		);
 	} finally {
 		await published;
 	}
@@ -102,20 +112,20 @@ async function execute(
 	local: LocalRunStorage,
 	publishInOrder: (userId: string, event: RunEvent) => void,
 	progressed: () => void,
-) {
+): Promise<boolean> {
 	const prepared = await loadRunForExecution(db, runId, {
 		history: !local.state()?.checkpoint,
 	});
 	await local.initialize(prepared.run, prepared.input, prepared.output);
 	await local.resolvePending(db);
-	if (local.state()?.seal) return;
+	if (local.state()?.seal) return false;
 	let run = local.state()!.run;
 	const announceSaved = (event: RunEvent | undefined) => {
 		if (event) publishInOrder(run.userId, event);
 	};
 	announceSaved(await local.observeControl(prepared.run));
 	run = local.state()!.run;
-	if (!isActiveRun(run.status)) return;
+	if (!isActiveRun(run.status)) return false;
 	if (!run.cancelRequested && run.status === RunStatus.QUEUED) {
 		const claimed = await local.save(db, {
 			id: crypto.randomUUID(),
@@ -147,6 +157,8 @@ async function execute(
 	let openStepStatus = StepStatus.FAILED;
 	let cancelled = run.cancelRequested;
 	let completed = false;
+	// The loop stopped at a call that waits for the person's consent.
+	let waiting = false;
 	let terminalObserved = false;
 	let writeFailed = false;
 	let writeFailure: unknown;
@@ -447,7 +459,15 @@ async function execute(
 		try {
 			while (true) {
 				const next = await loop.next();
-				if (next.done) break;
+				if (next.done) {
+					if (next.value === StopReason.WAITING) {
+						// A stop that came with the request's own commit ends the
+						// run instead: nobody is left to answer.
+						signal.throwIfAborted();
+						waiting = true;
+					}
+					break;
+				}
 				if (next.value.type === "calibration")
 					measuredTokensPerChar = next.value.tokensPerChar;
 				else if (
@@ -525,7 +545,11 @@ async function execute(
 	}
 	if (completed || terminalObserved) {
 		await closeTools(true);
-		return;
+		return false;
+	}
+	if (waiting) {
+		await closeTools(false);
+		return true;
 	}
 	if (deferral) {
 		await closeTools(false);
@@ -540,6 +564,7 @@ async function execute(
 		}
 	}
 	await closeTools(true);
+	return false;
 }
 
 // A stop that found no execution to stop (its actor had restarted): a call
